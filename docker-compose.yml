@@ -1,0 +1,73 @@
+# CiegoLink Infrastructure Hub
+# Install: sudo bash install.sh
+name: ciegolinkinfrahub
+
+services:
+  hub:
+    build: .
+    image: ciegolink/ciegolinkinfrahub:1.0.0
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Europe/Zurich}
+      GATEWAY_SECRET: ${GATEWAY_SECRET:?Set GATEWAY_SECRET in .env (openssl rand -hex 32)}
+      SOFTWARE_MAX_MB: ${SOFTWARE_MAX_MB:-2048}
+      INFRA_ADMIN_USER: ${INFRA_ADMIN_USER:-admin}
+      INFRA_ADMIN_PASSWORD: ${INFRA_ADMIN_PASSWORD:-}
+    volumes:
+      - config:/var/www/ciegolinkinfrahub/config
+      - data:/var/www/ciegolinkinfrahub/data
+    ports:
+      # local only, reverse proxy in front
+      - "127.0.0.1:${HUB_PORT:-18438}:80"
+    networks: [backend]
+    depends_on:
+      ssh-gateway:
+        condition: service_healthy
+    security_opt: ["no-new-privileges:true"]
+    sysctls:
+      # unprivileged ICMP for the device status check
+      net.ipv4.ping_group_range: "0 2147483647"
+
+  ssh-gateway:
+    build:
+      context: .
+      dockerfile: docker/gateway.Dockerfile
+    image: ciegolink/ciegolinkinfrahub-ssh-gateway:1.0.0
+    restart: unless-stopped
+    environment:
+      GATEWAY_SECRET: ${GATEWAY_SECRET:?Set GATEWAY_SECRET in .env}
+      GATEWAY_ORIGIN: ${PUBLIC_URL:?Set PUBLIC_URL in .env, e.g. https://hub.example.com}
+      GATEWAY_IDLE_SECONDS: 1800
+      GATEWAY_MAX_SECONDS: 28800
+      GATEWAY_MAX_SESSIONS: 10
+    volumes:
+      - gateway:/state
+    networks: [backend]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+  caddy:
+    image: caddy:2.8-alpine
+    profiles: [caddy]
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [backend]
+    depends_on: [hub]
+
+networks:
+  backend:
+
+volumes:
+  config:
+  data:
+  gateway:
+  caddy-data:
+  caddy-config:

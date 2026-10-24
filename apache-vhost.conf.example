@@ -1,0 +1,36 @@
+# Replace hub.example.com, /var/www/ciegolinkinfrahub and the certificate paths. Use the PHP integration of your server (PHP-FPM or mod_php).
+<VirtualHost *:80>
+    ServerName hub.example.com
+    Redirect permanent / https://hub.example.com/
+</VirtualHost>
+<VirtualHost *:443>
+    ServerName hub.example.com
+    DocumentRoot /var/www/ciegolinkinfrahub/public
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/hub.example.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/hub.example.com/privkey.pem
+    <Directory /var/www/ciegolinkinfrahub>
+        AllowOverride None
+        Require all denied
+    </Directory>
+    <Directory /var/www/ciegolinkinfrahub/public>
+        Options -Indexes -Includes -ExecCGI
+        AllowOverride None
+        Require all granted
+        DirectoryIndex index.php
+        <FilesMatch "^\.">
+            Require all denied
+        </FilesMatch>
+    </Directory>
+    # With PHP-FPM: add the FPM handler of your PHP version here.
+    # Example for PHP 8.3 (only enable if this socket exists):
+    # <FilesMatch "\.php$">
+    #     SetHandler "proxy:unix:/run/php/php8.3-fpm.sock|fcgi://localhost"
+    # </FilesMatch>
+    # Optional SSH terminal (ssh-gateway/setup.sh): needs mod_proxy + mod_proxy_wstunnel.
+    # Only the WebSocket path is proxied; the gateway's ticket endpoint stays local.
+    # ProxyPass        /ssh-gateway/ws ws://127.0.0.1:8022/ws
+    # ProxyPassReverse /ssh-gateway/ws ws://127.0.0.1:8022/ws
+    ErrorLog ${APACHE_LOG_DIR}/infra-error.log
+    CustomLog ${APACHE_LOG_DIR}/infra-access.log combined
+</VirtualHost>

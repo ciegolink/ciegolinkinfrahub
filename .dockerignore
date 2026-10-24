@@ -1,0 +1,12 @@
+.git
+.env
+config/*
+data/*
+tests
+**/__pycache__
+ssh-gateway/venv
+ssh-gateway/state
+ssh-gateway/gateway.env
+*.zip
+apache-ciegolinkinfrahub.conf
+install.sh
