@@ -1,4 +1,4 @@
-# CiegoLink Infrastructure Hub
+# CiegoLink Workspace & Infrastructure Hub 
 
 Web application for documenting and operating IT and broadcast infrastructure: locations, servers and devices, IP management, racks, connection map, password manager with folders and encrypted files, team documentation (visual or Markdown editor), maintenance planning with a public API, software library and an SSH terminal. Personal accounts with roles, mandatory 2FA and audit log.
 
