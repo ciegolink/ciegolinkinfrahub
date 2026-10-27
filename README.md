@@ -37,10 +37,10 @@ The script asks for the URL, creates `.env`, starts the containers and shows the
 ## Screenshots
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/5a8955af-7f70-4759-b1b6-b9a742beaa74" width="49%" alt="Overview">
-  <img src="https://github.com/user-attachments/assets/0df16e9d-e4a2-42ed-877d-d31d4a0a54f1" width="49%" alt="Password manager">
+  <img src="screenshots/5a8955af-7f70-4759-b1b6-b9a742beaa74.jpg" width="49%" alt="Overview">
+  <img src="screenshots/0df16e9d-e4a2-42ed-877d-d31d4a0a54f1.jpg" width="49%" alt="Password manager">
 </p>
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/b2984659-9c1a-4a30-a99a-29946e7a9dc8" width="49%" alt="IP management">
-  <img src="https://github.com/user-attachments/assets/80f37224-58ee-4741-a992-49dd0d366ad4" width="49%" alt="Connection map">
+  <img src="screenshots/b2984659-9c1a-4a30-a99a-29946e7a9dc8.jpg" width="49%" alt="IP management">
+  <img src="screenshots/80f37224-58ee-4741-a992-49dd0d366ad4.jpg" width="49%" alt="Connection map">
 </p>
