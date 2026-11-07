@@ -3,7 +3,7 @@ const nodes=new Map();const el=s=>{if(!nodes.has(s))nodes.set(s,{innerHTML:'',te
 const ctx={document:{querySelector:el,querySelectorAll:()=>[],addEventListener(){}},setTimeout(){},clearTimeout(){},setInterval(){},URL,console};vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../public/secure.js'),'utf8').replace(';run(init);',';'),ctx);
 (async()=>{
-vm.runInContext("user={id:1,role:'admin'};records=[{id:1,kind:'buildings',data:{name:'Office'}},{id:2,kind:'devices',data:{name:'Server',building:'1',ip:'198.51.100.10\\n2001:db8::10',note:'Maintenance Friday',software:'Docker nginx:1.27'}},{id:3,kind:'credentials',data:{name:'SSH access',device:'2',username:'admin'}}];page='devices';render();edit('devices',2)",ctx);
+vm.runInContext("workspaces=[{id:1,name:'Main workspace',note:'',role:'user',records:3,docs:0}];wsId=1;user={id:1,role:'admin'};records=[{id:1,kind:'buildings',data:{name:'Office'}},{id:2,kind:'devices',data:{name:'Server',building:'1',ip:'198.51.100.10\\n2001:db8::10',note:'Maintenance Friday',software:'Docker nginx:1.27'}},{id:3,kind:'credentials',data:{name:'SSH access',device:'2',username:'admin'}}];page='devices';render();edit('devices',2)",ctx);
 assert(nodes.get('#fields').innerHTML.includes('class="field-wide">Notes'));
 assert(nodes.get('#fields').innerHTML.includes('Installed software / packages / Docker images'));
 assert(nodes.get('#fields').innerHTML.includes('External IP addresses'));
@@ -88,6 +88,21 @@ vm.runInContext("closeModal();wsDelete(2)",ctx);{const f=nodes.get('#fields').in
 vm.runInContext("closeModal();user.role='editor';renderWs()",ctx);assert(nodes.get('#wsbox').innerHTML.includes('id="ws-select"'));
 vm.runInContext("closeModal()",ctx);await vm.runInContext("acct('workspaces')",ctx);{const f=nodes.get('#fields').innerHTML;assert(!f.includes('data-acct="workspaces"'));assert(!f.includes('data-ws-del'));}
 vm.runInContext("user.role='admin';page='map';render()",ctx);
+// workspace roles: workspace admin edits, workspace user only reads, no workspace = notice
+vm.runInContext("closeModal();workspaces=[{id:1,name:'Main workspace',note:'',role:'admin',records:5,docs:1},{id:2,name:'Kunde',note:'',role:'user',records:0,docs:0}];wsId=1;user={id:5,role:'reader',username:'anna'};page='devices';render()",ctx);
+{const m=nodes.get('#main').innerHTML;assert(m.includes('data-new="devices"'));assert(m.includes('data-edit="2"'));}
+assert.equal(vm.runInContext("canSoftware()",ctx),true);
+await vm.runInContext("acct('workspaces')",ctx);{const f=nodes.get('#fields').innerHTML;assert(f.includes('data-ws-members="1"'));assert(!f.includes('data-ws-members="2"'));assert(!f.includes('data-ws-del'));assert(!f.includes('name="name"'));assert(!f.includes('data-acct="users"'));assert(f.includes('data-acct="data"'));}
+vm.runInContext("closeModal();wsId=2;render()",ctx);{const m=nodes.get('#main').innerHTML;assert(!m.includes('data-new="devices"'));assert(!m.includes('data-edit="2"'));assert(m.includes('data-copy-password="3"'));}
+await vm.runInContext("acct('data')",ctx);assert(!nodes.get('#fields').innerHTML.includes('id="import-json"'));
+vm.runInContext("closeModal();workspaces=[{id:2,name:'Kunde',note:'',role:'user',records:0,docs:0}];render()",ctx);assert.equal(vm.runInContext("canSoftware()",ctx),false);
+vm.runInContext("workspaces=[];wsId=0;render()",ctx);assert(nodes.get('#main').innerHTML.includes('no access to a workspace'));
+vm.runInContext("page='software';render()",ctx);assert(nodes.get('#main').innerHTML.includes('Software <em>library'));
+vm.runInContext("workspaces=[{id:1,name:'Main workspace',note:'',role:'sysadmin',records:5,docs:1},{id:2,name:'Kunde <x>',note:'',role:'sysadmin',records:0,docs:0}];wsId=1;user={id:1,role:'admin',username:'marco'};api=async a=>a==='users'?{users:[{id:1,username:'marco',role:'admin',active:1,must_change:0,has_totp:1,workspaces:{}},{id:5,username:'anna',display_name:'Anna',role:'reader',active:1,must_change:0,has_totp:1,workspaces:{'2':'admin','1':'user'}}]}:a==='ws_members'?{users:[{id:1,username:'marco',name:'',active:true,role:'sysadmin'},{id:5,username:'anna',name:'Anna',active:true,role:'admin'},{id:6,username:'tom',name:'',active:false,role:''}]}:{}",ctx);
+await vm.runInContext("acct('users')",ctx);{const f=nodes.get('#fields').innerHTML;assert(f.includes('System administrator'));assert(f.includes('Main workspace, Kunde &lt;x&gt; (admin)'));}
+vm.runInContext("closeModal()",ctx);await vm.runInContext("wsMembers(2)",ctx);{const f=nodes.get('#fields').innerHTML;assert(f.includes('data-member="5"'));assert(f.includes('data-member="6"'));assert(!f.includes('data-member="1"'));assert(f.includes('System administrator · always'));assert(f.includes('disabled'));}
+vm.runInContext("closeModal()",ctx);await vm.runInContext("acct('workspaces')",ctx);{const f=nodes.get('#fields').innerHTML;assert(f.includes('data-ws-del="2"'));assert(f.includes('name="name"'));assert(f.includes('data-ws-members="2"'));}
+vm.runInContext("closeModal();page='map';render()",ctx);
 vm.runInContext("page='devices';render()",ctx);assert(nodes.get('#main').innerHTML.includes('CONNECTIONS'));
 vm.runInContext("edit('links',0,{from:'20',to:'2'})",ctx);assert(nodes.get('#fields').innerHTML.includes('<option value="20" selected>'));
 vm.runInContext("closeModal();user.role='reader';page='map';render()",ctx);assert(!nodes.get('#main').innerHTML.includes('data-handle='));
@@ -134,5 +149,5 @@ vm.runInContext("closeModal();user.role='admin';docList=[{id:5,title:'Runbook <x
 vm.runInContext("startDocEdit(docCur)",ctx);{const d=nodes.get('#docpane').innerHTML;assert(d.includes('data-cmd="bold"'));assert(d.includes('data-docmode="md"'));assert(d.includes('id="doc-visual"'));}
 vm.runInContext("docEdit=null;docDirty=false;user.role='reader';render()",ctx);{const m=nodes.get('#main').innerHTML;assert(!m.includes('data-doc-new'));assert(!nodes.get('#docpane').innerHTML.includes('data-doc-edit'));}
 vm.runInContext("user.role='admin';docCur=null",ctx);
-console.log('PASS: workspaces (switcher, manage, delete confirmation), several connection maps, hide boxes per map, add-to-map picker, zoom controls, info tab with manual, audit paging + search, system tab, half-width rack items, IP links, version, software library, export & import in account popup, CSV escaping, full-page map, stats only on overview, IP type list, device credentials copy, autofill off, connection map, admin popup, device ping, Web control, IP sort ascending, list inputs, Webmin field, IP range tabs, English forms, wide fields, external IP and software search, Files button, escaped filenames, reader UI permissions.');
+console.log('PASS: workspace roles (admin edits, user reads, members, access per user), workspaces (switcher, manage, delete confirmation), several connection maps, hide boxes per map, add-to-map picker, zoom controls, info tab with manual, audit paging + search, system tab, half-width rack items, IP links, version, software library, export & import in account popup, CSV escaping, full-page map, stats only on overview, IP type list, device credentials copy, autofill off, connection map, admin popup, device ping, Web control, IP sort ascending, list inputs, Webmin field, IP range tabs, English forms, wide fields, external IP and software search, Files button, escaped filenames, reader UI permissions.');
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -60,7 +60,7 @@ function pingMany(array $targets,string $url=''):array {
     }
     return $out;
 }
-function migrate():void {static $done=false;if($done)return;$done=true;$cols=array_column(query('PRAGMA table_info(users)')->fetchAll(),'name');if($cols&&!in_array('display_name',$cols,true))db()->exec("ALTER TABLE users ADD COLUMN display_name TEXT NOT NULL DEFAULT ''");workspaceMigrate();}
+function migrate():void {static $done=false;if($done)return;$done=true;$cols=array_column(query('PRAGMA table_info(users)')->fetchAll(),'name');if($cols&&!in_array('display_name',$cols,true))db()->exec("ALTER TABLE users ADD COLUMN display_name TEXT NOT NULL DEFAULT ''");workspaceMigrate();memberMigrate();}
 // Workspaces (one per customer or project) and connection maps
 function columns(string $table):array {return array_column(query('PRAGMA table_info('.$table.')')->fetchAll(),'name');}
 function workspaceMigrate():void {
@@ -86,11 +86,41 @@ function workspaceMigrate():void {
         db()->exec('COMMIT');
     }catch(Throwable $e){db()->exec('ROLLBACK');throw $e;}
 }
-// Current workspace from ?ws=. Without it the first workspace is used; a workspace that was deleted meanwhile is only replaced for reading the list.
-function ws():int {static $w=null;if($w!==null)return $w;$id=(int)($_GET['ws']??0);if($id>0&&query('SELECT id FROM workspaces WHERE id=?',[$id])->fetch())return $w=$id;if($id>0&&($_GET['action']??'')!=='list')fail('This workspace no longer exists. Reload the page.',409);return $w=(int)(query('SELECT id FROM workspaces ORDER BY id LIMIT 1')->fetchColumn()?:1);}
+// Access: system administrators (role admin) see every workspace. Other users only see the workspaces they are members of,
+// as workspace admin (may change content, members, name, export/import) or workspace user (sees everything incl. passwords, changes nothing).
+function memberMigrate():void {
+    if(!query("SELECT name FROM sqlite_master WHERE type='table' AND name='workspaces'")->fetch()||query("SELECT value FROM meta WHERE key='members_v1'")->fetch())return;
+    db()->exec('BEGIN IMMEDIATE');
+    try{
+        db()->exec("CREATE TABLE IF NOT EXISTS workspace_members(ws INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, role TEXT NOT NULL CHECK(role IN ('admin','user')), PRIMARY KEY(ws,user_id)); CREATE INDEX IF NOT EXISTS workspace_members_user ON workspace_members(user_id)");
+        if(!query("SELECT value FROM meta WHERE key='members_v1'")->fetch()){
+            // until now every user saw every workspace: keep that, editors become workspace admins, readers workspace users
+            query("INSERT OR IGNORE INTO workspace_members(ws,user_id,role) SELECT w.id,u.id,CASE u.role WHEN 'editor' THEN 'admin' ELSE 'user' END FROM workspaces w, users u WHERE u.role<>'admin'");
+            query("INSERT INTO meta(key,value) VALUES('members_v1',?)",[gmdate('c')]);
+        }
+        db()->exec('COMMIT');
+    }catch(Throwable $e){db()->exec('ROLLBACK');throw $e;}
+}
+// workspace id => 'sysadmin' | 'admin' | 'user'
+function userWorkspaces(array $u):array {$o=[];if($u['role']==='admin'){foreach(query('SELECT id FROM workspaces ORDER BY id')->fetchAll() as $w)$o[(int)$w['id']]='sysadmin';return $o;}foreach(query('SELECT ws,role FROM workspace_members WHERE user_id=? ORDER BY ws',[$u['id']])->fetchAll() as $m)$o[(int)$m['ws']]=$m['role'];return $o;}
+function wsState(?array $set=null):array {static $s=['ws'=>0,'role'=>null,'all'=>[]];if($set!==null)$s=$set;return $s;}
+// Current workspace from ?ws=. Without it the first accessible workspace is used; a workspace that was deleted or is no longer accessible is only replaced for reading the list.
+function wsInit(array $u):void {$all=userWorkspaces($u);$id=(int)($_GET['ws']??0);
+    if($id>0&&isset($all[$id]))$w=$id;elseif($id>0&&($_GET['action']??'')!=='list')fail('This workspace no longer exists or you have no access to it. Reload the page.',409);else $w=(int)(array_key_first($all)??0);
+    wsState(['ws'=>$w,'role'=>$w?$all[$w]:null,'all'=>$all]);}
+function ws():int {return wsState()['ws'];}
+function wsRole():?string {return wsState()['role'];}
+function wsCanWrite():bool {return in_array(wsRole(),['sysadmin','admin'],true);}
+function wsWrite():void {if(!wsCanWrite())fail(ws()?'Read-only access in this workspace.':'No workspace available. Ask a system administrator for access.',403);}
+function wsAdminOf(array $u,int $id):bool {return in_array(userWorkspaces($u)[$id]??null,['sysadmin','admin'],true);}
+// software library is shared: system administrators and administrators of any workspace may change it
+function softwareWrite(array $u):void {if($u['role']!=='admin'&&!query("SELECT 1 FROM workspace_members WHERE user_id=? AND role='admin'",[$u['id']])->fetch())fail('Read-only access.',403);}
+// replaces all workspace memberships of a user; ignored for system administrators
+function memberSet(int $uid,$map,string $role):void {if(!is_array($map))fail('Invalid workspaces.',422);query('DELETE FROM workspace_members WHERE user_id=?',[$uid]);if($role==='admin')return;
+    foreach($map as $w=>$r){if($r===''||$r===null)continue;if(!in_array($r,['admin','user'],true)||!ctype_digit((string)$w)||!query('SELECT id FROM workspaces WHERE id=?',[(int)$w])->fetch())fail('Invalid workspace access.',422);query('INSERT INTO workspace_members(ws,user_id,role) VALUES(?,?,?)',[(int)$w,$uid,$r]);}}
 // Record of one of the given kinds in the current workspace
 function rec(int $id,array|string $kinds):array|false {$k=(array)$kinds;return query('SELECT * FROM records WHERE id=? AND ws=? AND kind IN ('.implode(',',array_fill(0,count($k),'?')).')',[$id,ws(),...$k])->fetch();}
-function workspaceList():array {return array_map(fn($w)=>['id'=>(int)$w['id'],'name'=>$w['name'],'note'=>$w['note'],'records'=>(int)$w['records'],'docs'=>(int)$w['docs']],query("SELECT w.id,w.name,w.note,(SELECT COUNT(*) FROM records r WHERE r.ws=w.id AND r.kind IN ('buildings','devices','ips','credentials','racks','elements','maintenance')) AS records,(SELECT COUNT(*) FROM docs d WHERE d.ws=w.id) AS docs FROM workspaces w ORDER BY w.name COLLATE NOCASE, w.id")->fetchAll());}
+function workspaceList(array $all):array {return array_values(array_filter(array_map(fn($w)=>['id'=>(int)$w['id'],'name'=>$w['name'],'note'=>$w['note'],'role'=>$all[(int)$w['id']]??null,'records'=>(int)$w['records'],'docs'=>(int)$w['docs']],query("SELECT w.id,w.name,w.note,(SELECT COUNT(*) FROM records r WHERE r.ws=w.id AND r.kind IN ('buildings','devices','ips','credentials','racks','elements','maintenance')) AS records,(SELECT COUNT(*) FROM docs d WHERE d.ws=w.id) AS docs FROM workspaces w ORDER BY w.name COLLATE NOCASE, w.id")->fetchAll()),fn($w)=>$w['role']!==null));}
 function workspaceName(string $n):string {$n=trim(preg_replace('/\s+/u',' ',$n)??'');if($n===''||mb_strlen($n)>80||preg_match('/[\x00-\x1f\x7f]/',$n))fail('Enter a name (max. 80 characters).',422);return $n;}
 function displayName(array $input):string {$n=trim((string)($input['display_name']??''));if(strlen($n)>120||preg_match('/[\x00-\x1f\x7f]/',$n))fail('Invalid name (maximum 80 characters).',422);return $n;}
 function attachmentSchema():void {db()->exec('CREATE TABLE IF NOT EXISTS attachments(id INTEGER PRIMARY KEY, credential_id INTEGER NOT NULL REFERENCES records(id) ON DELETE CASCADE, filename TEXT NOT NULL, size INTEGER NOT NULL, sha256 TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL); CREATE INDEX IF NOT EXISTS attachment_credential ON attachments(credential_id)');}
@@ -122,7 +152,7 @@ function exportData(array $u,bool $passwords,bool $files):array {
     }}
     docsSchema();foreach(query('SELECT * FROM docs WHERE ws=? ORDER BY id',[ws()])->fetchAll() as $d)$out['docs'][]=['id'=>(int)$d['id'],'title'=>$d['title'],'category'=>$d['category'],'markdown'=>$d['body'],'updated_at'=>$d['updated_at'],'updated_by'=>$d['updated_by']];
     foreach(query('SELECT * FROM software ORDER BY id')->fetchAll() as $f)$out['software'][]=['id'=>(int)$f['id'],'name'=>$f['name'],'version'=>$f['version'],'platform'=>$f['platform'],'notes'=>$f['note'],'filename'=>$f['filename'],'size'=>(int)$f['size'],'sha256'=>$f['sha256'],'uploaded_at'=>$f['created_at'],'uploaded_by'=>$f['uploaded_by'],'server_file'=>'software/'.$f['stored']];
-    foreach(query('SELECT username,display_name,role,active FROM users ORDER BY username')->fetchAll() as $x)$out['users'][]=['username'=>$x['username'],'name'=>$x['display_name'],'role'=>$x['role'],'active'=>(bool)$x['active']];
+    if($u['role']==='admin')foreach(query('SELECT username,display_name,role,active FROM users ORDER BY username')->fetchAll() as $x)$out['users'][]=['username'=>$x['username'],'name'=>$x['display_name'],'role'=>$x['role'],'active'=>(bool)$x['active']];
     return $out;
 }
 // Import of a JSON export (format ciegolink-infrahub-export). Runs inside the caller's transaction; any fail() rolls back.

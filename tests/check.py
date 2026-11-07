@@ -164,6 +164,21 @@ class SecurityChecks(unittest.TestCase):
         self.assertEqual(self.editor.call('workspace_save',{'name':'Kunde A'})[0],403)
         self.assertEqual(self.admin.call('workspace_save',{'name':''})[0],422)
         st,out=self.admin.call('workspace_save',{'name':'Kunde A','note':'Vertrag'});self.assertEqual(st,200,out);ka=out['id']
+        # a new workspace is only visible to system administrators
+        self.assertFalse(any(w['id']==ka for w in self.editor.call('list',{})[1]['workspaces']))
+        self.assertEqual(self.editor.call('save',{'kind':'buildings','data':{'name':'X'}},ws=ka)[0],409)
+        self.assertEqual(self.editor.call('ws_members',{'id':ka})[0],403)
+        self.assertEqual(self.reader.call('ws_member_set',{'id':ka,'user_id':1,'role':'admin'})[0],403)
+        users={x['username']:x['id'] for x in self.admin.call('users',{})[1]['users']}
+        self.assertEqual(self.admin.call('ws_member_set',{'id':ka,'user_id':users['admin'],'role':'user'})[0],422)  # system admins always have access
+        self.assertEqual(self.admin.call('ws_member_set',{'id':ka,'user_id':users['editor'],'role':'admin'})[0],200)
+        self.assertEqual(self.editor.call('ws_member_set',{'id':ka,'user_id':users['reader'],'role':'user'})[0],200)  # workspace admin manages members
+        mem={x['username']:x['role'] for x in self.editor.call('ws_members',{'id':ka})[1]['users']}
+        self.assertEqual((mem['admin'],mem['editor'],mem['reader']),('sysadmin','admin','user'))
+        self.assertEqual(next(w['role'] for w in self.reader.call('list',{},ws=ka)[1]['workspaces'] if w['id']==ka),'user')
+        self.assertEqual(self.reader.call('save',{'kind':'buildings','data':{'name':'Reader denied'}},ws=ka)[0],403)
+        self.assertEqual(self.editor.call('workspace_save',{'id':ka,'name':'Kunde A','note':'Vertrag 2027'})[0],200)  # workspace admin may rename
+        self.assertEqual(self.reader.call('workspace_save',{'id':ka,'name':'Hack'})[0],403)
         self.assertEqual(self.admin.call('workspace_save',{'name':'kunde a'})[0],409)
         st,out=self.admin.call('save',{'kind':'buildings','data':{'name':'Kunde A RZ'}},ws=ka);self.assertEqual(st,200,out);loc=out['id']
         st,out=self.admin.call('save',{'kind':'devices','data':{'name':'Kunde A server','building':str(loc)}},ws=ka);self.assertEqual(st,200,out);dv=out['id']
@@ -186,6 +201,15 @@ class SecurityChecks(unittest.TestCase):
         self.assertEqual(self.admin.call('workspace_delete',{'id':ka,'name':'Kunde A','password':'wrong'})[0],403)
         self.assertEqual(self.admin.call('workspace_delete',{'id':ka,'name':'Kunde B','password':'Test-only-password-123!'})[0],422)
         self.assertEqual(self.editor.call('workspace_delete',{'id':ka,'name':'Kunde A','password':'Test-only-password-123!'})[0],403)
+        self.assertEqual(self.editor.call('export',{},ws=ka)[1]['users'],[])  # workspace admins export without the user list
+        self.assertEqual(self.reader.call('export',{},ws=ka)[0],403)
+        self.assertEqual(self.editor.call('ws_member_set',{'id':ka,'user_id':users['reader'],'role':''})[0],200)
+        self.assertEqual(self.reader.call('reveal',{'id':cid},ws=ka)[0],409)  # access removed
+        st,u2=self.admin.call('user_create',{'username':'ws-only','password':'Test-only-password-123!','role':'user','workspaces':{str(ka):'user'}});self.assertEqual(st,200,u2)
+        u2=next(x for x in self.admin.call('users',{})[1]['users'] if x['username']=='ws-only');self.assertEqual((u2['role'],u2['workspaces']),('reader',{str(ka):'user'}))
+        self.assertEqual(self.admin.call('user_update',{'id':u2['id'],'display_name':'','role':'user','active':True,'workspaces':{str(ka):'admin',str(main):'user'}})[0],200)
+        u2=next(x for x in self.admin.call('users',{})[1]['users'] if x['username']=='ws-only');self.assertEqual(u2['workspaces'],{str(ka):'admin',str(main):'user'})
+        self.assertEqual(self.admin.call('user_update',{'id':u2['id'],'display_name':'','role':'user','active':True,'workspaces':{'999999':'user'}})[0],422)
         self.assertEqual(self.admin.call('workspace_delete',{'id':ka,'name':'Kunde A','password':'Test-only-password-123!'})[0],200)
         self.assertEqual(self.admin.call('save',{'kind':'buildings','data':{'name':'Gone'}},ws=ka)[0],409)
         st,out=self.admin.call('list',{},ws=ka);self.assertEqual(st,200);self.assertEqual(out['ws'],main)  # falls back for reading
@@ -207,6 +231,9 @@ class SecurityChecks(unittest.TestCase):
         import sqlite3
         db=sqlite3.connect(self.folder/'infra.sqlite');cols=[r[1] for r in db.execute('PRAGMA table_info(users)')];db.close()
         self.assertIn('display_name',cols)
+        self.assertEqual(API(self.base).call('state')[0],200)  # runs the migration
+        db=sqlite3.connect(self.folder/'infra.sqlite');m=dict(db.execute("SELECT u.username,m.role FROM workspace_members m JOIN users u ON u.id=m.user_id WHERE m.ws=1").fetchall());db.close()
+        self.assertEqual((m.get('editor'),m.get('reader'),m.get('admin')),('admin','user',None))  # editors become workspace admins, readers workspace users
     def test_06_user_revocation(self):
         self.assertEqual(self.admin.call('user_create',{'username':'disabled-test','password':'Testing-temporary-pass!','role':'reader'})[0],200)
         u=next(u for u in self.admin.call('users',{})[1]['users'] if u['username']=='disabled-test')
@@ -336,7 +363,7 @@ class SecurityChecks(unittest.TestCase):
         self.assertEqual(self.download(self.reader,f['id'])[0],404)
     def test_15_export(self):
         self.assertEqual(self.reader.call('export',{})[0],403)
-        self.assertEqual(self.editor.call('export',{})[0],403)
+        st,out=self.editor.call('export',{});self.assertEqual(st,200);self.assertEqual(out['users'],[])  # workspace admin: own workspace, no user list
         self.assertEqual(self.save('credentials',{'name':'Export secret','username':'exp','password':'S3cret-für-Export'})[0],200)
         st,out=self.admin.call('export',{})
         self.assertEqual(st,200);self.assertEqual(out['format'],'ciegolink-infrahub-export')
@@ -363,7 +390,7 @@ class SecurityChecks(unittest.TestCase):
         self.assertEqual(self.save('ips',{'name':'Import ip','building':str(loc['id']),'ip':'10.77.0.9','status':'Assigned'})[0],200)
         export=self.admin.call('export',{'passwords':True,'password':pw})[1]
         before=len(self.records())
-        self.assertEqual(self.editor.call('import',{'password':pw,'data':export})[0],403)
+        self.assertEqual(self.reader.call('import',{'password':pw,'data':export})[0],403)
         self.assertEqual(self.admin.call('import',{'password':'wrong','data':export})[0],403)
         self.assertEqual(self.admin.call('import',{'password':pw,'data':{'format':'other'}})[0],422)
         bad=json.loads(json.dumps(export));bad['devices'][0]['external_ips']=['999.1.1.1']

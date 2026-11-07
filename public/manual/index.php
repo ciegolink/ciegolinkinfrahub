@@ -60,8 +60,9 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 <section id="workspaces"><h2>Workspaces</h2>
 <p>A workspace keeps the data of one customer or project apart. Choose it in the box <b>WORKSPACE</b> at the top of the sidebar; its name is shown in the header. Each workspace has its own locations, devices, IP addresses, credentials and files, racks, connection maps, documentation and maintenance windows. Users, the audit log, the software library and API tokens are shared by all workspaces.</p>
 <ul>
-<li><b>Manage</b> (administrators): your name at the bottom of the sidebar → <b>My account</b> → tab <b>Workspaces</b> creates, renames, opens and deletes workspaces. Deleting removes all content of the workspace and asks for the name of the workspace and your password.</li>
-<li><b>Export &amp; import</b> always work on the open workspace. To move a customer into its own workspace: export, create the new workspace, open it, import.</li>
+<li><b>Manage:</b> your name at the bottom of the sidebar → <b>My account</b> → tab <b>Workspaces</b>. System administrators create, rename and delete workspaces; workspace admins rename their workspace.</li>
+<li><b>Who sees what:</b> <b>Members</b> next to a workspace sets the access of every user: <i>No access</i>, <i>Workspace user (read only)</i> or <i>Workspace admin</i>. System administrators can also set it per user under <b>User management</b> → <b>Manage</b>. A new workspace is visible to system administrators only until members are added. Users without any workspace see a notice and the software library. Deleting removes all content of the workspace and asks for the name of the workspace and your password.</li>
+<li><b>Export &amp; import</b> (workspace admins and system administrators) always work on the open workspace. To move a customer into its own workspace: export, create the new workspace, open it, import.</li>
 <li>Existing data from earlier versions is in <b>Main workspace</b>.</li>
 </ul>
 </section>
@@ -235,17 +236,19 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 </section>
 
 <section id="roles"><h2>Roles &amp; permissions</h2>
-<table><thead><tr><th>Permission</th><th>Read</th><th>Edit</th><th>Administrator</th></tr></thead><tbody>
-<tr><td>View all modules, search, ping</td><td>✓</td><td>✓</td><td>✓</td></tr>
+<p>Every account is either a <b>system administrator</b> or a <b>user</b>. System administrators see every workspace. Users only see the workspaces they are members of, with one role per workspace: <b>workspace admin</b> or <b>workspace user</b>.</p>
+<table><thead><tr><th>Permission</th><th>Workspace user</th><th>Workspace admin</th><th>System administrator</th></tr></thead><tbody>
+<tr><td>See the workspace: all modules, search, ping</td><td>✓</td><td>✓</td><td>✓ (all workspaces)</td></tr>
 <tr><td>Show and copy passwords, download files and software</td><td>✓</td><td>✓</td><td>✓</td></tr>
-<tr><td>Create, edit and delete entries, create and arrange maps, mount rack items</td><td>–</td><td>✓</td><td>✓</td></tr>
-<tr><td>Upload files and software</td><td>–</td><td>✓</td><td>✓</td></tr>
 <tr><td>Read documentation</td><td>✓</td><td>✓</td><td>✓</td></tr>
-<tr><td>Write, change and delete documentation</td><td>–</td><td>✓</td><td>✓</td></tr>
-<tr><td>Manage users and workspaces, audit log, export &amp; import, server details in Info</td><td>–</td><td>–</td><td>✓</td></tr>
+<tr><td>Create, edit and delete entries, maps, rack items, documentation, maintenance windows</td><td>–</td><td>✓</td><td>✓</td></tr>
+<tr><td>Upload credential files</td><td>–</td><td>✓</td><td>✓</td></tr>
+<tr><td>Add and remove members of the workspace, rename it, export &amp; import</td><td>–</td><td>✓</td><td>✓</td></tr>
+<tr><td>Upload and change software (shared library)</td><td>–</td><td>✓ (admin of any workspace)</td><td>✓</td></tr>
+<tr><td>Create and delete workspaces, manage users, audit log, maintenance API tokens, server details in Info</td><td>–</td><td>–</td><td>✓</td></tr>
 <tr><td>SSH terminal</td><td>–</td><td>–</td><td>✓</td></tr>
 </tbody></table>
-<p>Two-factor authentication is mandatory for every role.</p>
+<p>Accounts from version 1.0.0 keep their access after the update: they become members of every existing workspace, former “Edit” accounts as workspace admin, former “Read” accounts as workspace user. Two-factor authentication is mandatory for every role.</p>
 </section>
 
 <section id="security"><h2>Security &amp; data</h2>

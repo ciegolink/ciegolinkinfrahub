@@ -224,3 +224,8 @@ a.iconbtn{border:1px solid var(--line);border-radius:7px;color:#a8aba5;backgroun
 .nodehide{position:absolute;right:8px;bottom:6px;width:22px;height:22px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:11px;line-height:22px;text-align:center;opacity:0;cursor:pointer;z-index:1}
 .mapnode:hover .nodehide,.nodehide:focus-visible{opacity:1}.nodehide:hover{background:#e5484d22;color:#f2a3a3}
 @media(hover:none){.nodehide{opacity:.75}}
+/* Workspace access per user */
+#fields .wsaccess{display:grid;gap:6px;margin-top:6px;max-height:260px;overflow:auto;padding-right:4px}
+#fields .wsaccess label{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13.5px}
+#fields .wsaccess label span{min-width:0;overflow-wrap:anywhere}
+#fields .wsaccess select,#fields select[data-member]{width:auto;min-width:230px}

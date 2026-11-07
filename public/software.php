@@ -25,7 +25,7 @@ try {
     if($action==='upload'){
         if($_SERVER['REQUEST_METHOD']!=='POST')fail('POST required.',405);
         if(!hash_equals($_SESSION['csrf'],$_SERVER['HTTP_X_CSRF_TOKEN']??''))fail('Session expired. Reload this page.',403);
-        if($u['role']==='reader')fail('Read-only access.',403);
+        softwareWrite($u);
         $max=softwareMax();
         if(empty($_FILES['file'])){
             if((int)($_SERVER['CONTENT_LENGTH']??0)>iniBytes((string)ini_get('post_max_size')))fail('File exceeds the server upload limit (post_max_size).',413);
