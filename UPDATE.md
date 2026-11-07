@@ -13,7 +13,7 @@ sudo bash update.sh --check    # only check
 The script does everything in one go:
 
 1. **Backup** to `/var/backups/ciegolinkinfrahub/<date>_v<old version>/`: database (SQLite online backup + integrity check), `config.php` with the encryption key, software library, `.env` and the old project files. The newest 10 backups are kept (`--keep N`, `--no-software` skips the software files, other folder: `BACKUP_DIR=/path sudo -E bash update.sh`).
-2. **New files**: `git pull` (fast-forward only; stops if project files were changed locally). Installation from a ZIP instead of git: download the new version and run `sudo bash update.sh --source ciegolinkinfrahub-main.zip` (a `.tar.gz` or folder works too; `.env` is kept).
+2. **New files**: with a git checkout `git pull` (fast-forward only; stops if project files were changed locally). Without git (installed from a ZIP) the script downloads the current version from GitHub itself; `.env`, `config/` and `data/` are kept. Own file or folder instead: `sudo bash update.sh --source <file.zip|file.tar.gz|folder>`.
 3. **Build and restart** (`docker compose build --pull`, `up -d`).
 4. **Check**: the hub must become healthy and report the new version. Otherwise the script **rolls back automatically** (old files, old images, database from the backup).
 

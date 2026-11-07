@@ -4,7 +4,8 @@
 #   sudo bash update.sh                  check for a new version, show the changes, back up, update
 #   sudo bash update.sh --check          only show whether an update is available
 #   sudo bash update.sh --yes            update without questions
-#   sudo bash update.sh --source FILE    update from a downloaded .zip/.tar.gz or a folder (installation without git)
+#   sudo bash update.sh --source FILE    update from a .zip/.tar.gz or a folder instead of GitHub
+#                                        (without git the new version is downloaded from GitHub automatically)
 #   sudo bash update.sh --rollback       undo the last update (code and database)
 #   sudo bash update.sh --install-timer [daily|weekly]   automatic updates (new versions only)
 #   sudo bash update.sh --remove-timer   stop automatic updates
@@ -33,7 +34,7 @@ while [ $# -gt 0 ]; do
     --remove-timer) MODE=untimer ;;
     --no-software) SOFTWARE=n ;;
     --keep) KEEP="${2:?--keep needs a number}"; shift; [[ "$KEEP" =~ ^[0-9]+$ ]] || { echo "--keep needs a number" >&2; exit 2; } ;;
-    -h|--help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "Unknown option: $1 (see --help)" >&2; exit 2 ;;
   esac
   shift
@@ -106,6 +107,9 @@ GIT=n; [ -z "$SOURCE" ] && [ -d .git ] && GIT=y
 # git runs as the owner of the repository, so files do not change owner when run with sudo
 OWNER="$(stat -c %U "$DIR")"
 g() { if [ "$(id -u)" = 0 ] && [ "$OWNER" != root ] && command -v sudo >/dev/null; then sudo -u "$OWNER" git -C "$DIR" "$@"; else git -c safe.directory="$DIR" -C "$DIR" "$@"; fi; }
+
+newer() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]; }
+REPO="${HUB_REPO:-ciegolink/ciegolinkinfrahub}"; BRANCH="${HUB_BRANCH:-main}"; DOWNLOADED=n
 
 wait_healthy() {
   local cid state=starting
@@ -180,31 +184,47 @@ if [ "$GIT" = y ]; then
   [ "$REBUILD" = y ] && { NEW="$CUR"; CUR="$RUN_VER"; }
   CHANGES="$(g log --format='  - %s' "HEAD..$REMOTE" 2>/dev/null | head -30 || true)"
 else
-  [ -n "$SOURCE" ] || fail "This folder is no git checkout. Download the new version and run: sudo bash update.sh --source <file.zip|folder>"
   TMP="$(mktemp -d)"
-  if [ -d "$SOURCE" ]; then cp -a "$SOURCE"/. "$TMP"/
+  if [ -z "$SOURCE" ]; then
+    # no git checkout: download the current version from GitHub
+    get() { if command -v curl >/dev/null; then curl -fsSL --retry 2 -o "$2" "$1"; elif command -v wget >/dev/null; then wget -q -O "$2" "$1"; else fail "curl or wget is missing (sudo apt install curl)."; fi; }
+    if [ "$AUTO" = y ]; then
+      get "https://raw.githubusercontent.com/$REPO/$BRANCH/VERSION" "$TMP/VERSION" || fail "GitHub not reachable."
+      AV="$(tr -d '[:space:]' < "$TMP/VERSION")"
+      newer "$AV" "$CUR" || { say "No new version (installed $CUR, available $AV)."; exit 0; }
+    fi
+    say "Downloading $REPO ($BRANCH) from GitHub ..."
+    get "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" "$TMP/source.tar.gz" || fail "Download from GitHub failed. Is the server online?"
+    SOURCE="$TMP/source.tar.gz"; DOWNLOADED=y
+  fi
+  if [ -d "$SOURCE" ]; then mkdir "$TMP/src" && cp -a "$SOURCE"/. "$TMP/src"/
   else
     [ -f "$SOURCE" ] || fail "$SOURCE not found."
     case "$SOURCE" in
-      *.zip) command -v unzip >/dev/null || fail "unzip is missing (sudo apt install unzip)."; unzip -q "$SOURCE" -d "$TMP" ;;
-      *.tar.gz|*.tgz) tar -xzf "$SOURCE" -C "$TMP" ;;
+      *.zip) command -v unzip >/dev/null || fail "unzip is missing (sudo apt install unzip)."; mkdir "$TMP/src" && unzip -q "$SOURCE" -d "$TMP/src" ;;
+      *.tar.gz|*.tgz) mkdir "$TMP/src" && tar -xzf "$SOURCE" -C "$TMP/src" ;;
       *) fail "Use a .zip, .tar.gz or a folder." ;;
     esac
   fi
   # GitHub archives contain one top folder
-  SRC="$TMP"; [ -f "$SRC/VERSION" ] || SRC="$(find "$TMP" -mindepth 2 -maxdepth 2 -name VERSION -printf '%h\n' | head -1 || true)"
+  SRC="$TMP/src"; [ -f "$SRC/VERSION" ] || SRC="$(find "$TMP/src" -mindepth 2 -maxdepth 2 -name VERSION -printf '%h\n' | head -1 || true)"
   [ -n "$SRC" ] && [ -f "$SRC/VERSION" ] && [ -f "$SRC/docker-compose.yml" ] && [ -f "$SRC/core.php" ] || fail "$SOURCE does not contain the Infrastructure Hub."
   NEW="$(tr -d '[:space:]' < "$SRC/VERSION")"
   NEW_COMMIT="source:$NEW"; PREV_COMMIT=""; CHANGES=""
+  # same version: only continue if files differ (e.g. a fix without a new version number)
+  if [ "$NEW" = "$CUR" ]; then
+    DIFF="$(cd "$SRC" && find . -type f ! -path './.git/*' ! -name .env | while read -r f; do cmp -s "$f" "$DIR/$f" || echo "  - ${f#./}"; done | head -30 || true)"
+    [ -n "$DIFF" ] || { say "Up to date (version $CUR)."; exit 0; }
+    CHANGES="Changed files:
+$DIFF"
+  fi
 fi
 
-newer() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]; }
 if [ "$AUTO" = y ]; then
   # unattended: only real releases, never a version that was rolled back
   newer "$NEW" "$CUR" || { say "No new version (installed $CUR, available $NEW)."; exit 0; }
   [ "$(cat "$STATE_DIR/skip" 2>/dev/null)" != "$NEW_COMMIT" ] || { say "Version $NEW was rolled back before - skipped. Update by hand once the problem is fixed."; exit 0; }
 fi
-if [ -z "$SOURCE" ] || [ "$NEW" != "$CUR" ]; then :; else say "Version $NEW is already installed."; [ "$YES" = y ] && exit 0; fi
 newer "$CUR" "$NEW" && [ "$NEW" != "$CUR" ] && say "Warning: $NEW is OLDER than the installed $CUR. For going back use --rollback."
 
 say ""
