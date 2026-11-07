@@ -218,6 +218,7 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 <ul>
 <li><b>＋ Add user:</b> name, username, role, workspace access and a temporary password. The new user sets their own password and 2FA on first sign-in.</li>
 <li><b>Manage:</b> change name, role or status (active / disabled). Saving ends the user's current sessions.</li>
+<li><b>Remove a user:</b> <b>Manage</b> → status <b>Disabled</b> → Save ends all sessions at once and keeps the account for later. To delete it permanently, open <b>Manage</b> again on the disabled user → <b>Delete user</b>, confirm with the username and your password. The audit log keeps the name. Your own account cannot be deleted.</li>
 <li>Lost 2FA device: the server administrator resets password and 2FA on the command line (see <a href="#faq">Troubleshooting</a>).</li>
 </ul>
 <h3>Audit log (administrators)</h3>

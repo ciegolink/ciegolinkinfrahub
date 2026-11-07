@@ -227,6 +227,24 @@ class SecurityChecks(unittest.TestCase):
         st=self.admin.call('state')[1]['user'];self.assertEqual((st['name'],st['role']),('Chef','admin'))
         self.assertEqual(self.admin.call('user_update',{'id':u['id'],'display_name':'x\u0001','role':'editor','active':True})[0],422)
         self.assertEqual(self.editor.call('user_update',{'id':u['id'],'display_name':'Hack'})[0],403)
+    def test_05g_user_delete(self):
+        pw='Test-only-password-123!'
+        self.assertEqual(self.admin.call('user_create',{'username':'to-delete','password':pw,'role':'user','workspaces':{'1':'admin'}})[0],200)
+        uid=next(x['id'] for x in self.admin.call('users',{})[1]['users'] if x['username']=='to-delete')
+        d=lambda api=None,**k:(api or self.admin).call('user_delete',{'id':uid,'username':'to-delete','password':pw,**k})[0]
+        self.assertEqual(d(self.editor),403)
+        self.assertEqual(d(),409)  # still active
+        self.assertEqual(self.admin.call('user_update',{'id':uid,'display_name':'','role':'user','active':False})[0],200)
+        self.assertEqual(d(username='other'),422)
+        self.assertEqual(d(password='wrong'),403)
+        me=next(x['id'] for x in self.admin.call('users',{})[1]['users'] if x['username']=='admin')
+        self.assertEqual(self.admin.call('user_delete',{'id':me,'username':'admin','password':pw})[0],409)  # own account
+        self.assertEqual(d(username='TO-DELETE'),200)
+        self.assertFalse(any(x['username']=='to-delete' for x in self.admin.call('users',{})[1]['users']))
+        import sqlite3
+        db=sqlite3.connect(self.folder/'infra.sqlite');n=db.execute('SELECT COUNT(*) FROM workspace_members WHERE user_id=?',(uid,)).fetchone()[0];db.close();self.assertEqual(n,0)
+        self.assertTrue(any(a['action']=='user_deleted' and a['target']=='to-delete' for a in self.admin.call('audit',{'q':'user_deleted'})[1]['entries']))
+        self.assertEqual(d(),404)
     def test_00_migration(self):
         import sqlite3
         db=sqlite3.connect(self.folder/'infra.sqlite');cols=[r[1] for r in db.execute('PRAGMA table_info(users)')];db.close()

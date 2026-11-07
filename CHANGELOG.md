@@ -10,6 +10,7 @@ Update: see `UPDATE.md` (`docker compose up -d --build`). No manual steps unless
 - **Several connection maps** per workspace (tabs). A map shows only the devices and elements added to it (**＋ Add to map**, **✕** hides a box on one map); positions are stored per map. Deleting a map keeps devices, elements and connections.
 - **Zoom** on connection maps: buttons (−, ＋, Fit, 100 %), Ctrl + mouse wheel and trackpad pinch; remembered per map on the device.
 - **QR code for the 2FA setup**: scan it with the authenticator app instead of typing the key (the key is still shown). Drawn locally in the browser as SVG with the bundled library qrcode-generator 2.0.4 (MIT); the key is never sent to another server.
+- **Delete users** (system administrators): only disabled users, confirmed with the username and the own password; workspace access and saved sign-ins are removed, the audit log keeps the name.
 - Maintenance API: optional parameter `workspace=<ID>`; every item contains `workspace` (id, name).
 - Export format version 2: `workspace` name and `maps` (with box positions) instead of `map_position` per device/element. Exports of 1.0.0 can still be imported; their positions become the map "Main map".
 - `update.sh`: update with backup (database, key, software, old files), `git pull` or `--source <zip>`, build, health and version check and automatic rollback; `--rollback` by hand; `--install-timer` for automatic updates of new versions (systemd).
