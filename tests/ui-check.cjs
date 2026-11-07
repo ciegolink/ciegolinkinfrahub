@@ -81,11 +81,12 @@ vm.runInContext("edit('maps',23)",ctx);assert(nodes.get('#fields').innerHTML.inc
 vm.runInContext("closeModal();user.role='reader';render()",ctx);{const m=nodes.get('#main').innerHTML;assert(!m.includes('data-new="maps"'));assert(!m.includes('data-map-add'));}
 vm.runInContext("user.role='reader';mapId=22;mapNodesData.push({map:22,node:2,x:400,y:40});render()",ctx);{const m=nodes.get('#main').innerHTML;assert(m.includes('data-zoom="fit"'));assert(!m.includes('data-map-hide'));}
 vm.runInContext("user.role='admin';workspaces=[{id:1,name:'Main workspace',note:'',records:5,docs:1},{id:2,name:'Kunde <AG>',note:'Vertrag 2026',records:0,docs:0}];wsId=1;renderWs();page='overview';render()",ctx);
-{const w=nodes.get('#wsbox').innerHTML;assert(w.includes('id="ws-select"'));assert(w.includes('Kunde &lt;AG&gt;'));assert(w.includes('value="1" selected'));assert(w.includes('data-ws-manage'));}
+{const w=nodes.get('#wsbox').innerHTML;assert(w.includes('id="ws-select"'));assert(w.includes('Kunde &lt;AG&gt;'));assert(w.includes('value="1" selected'));assert(!w.includes('data-ws-manage'));assert(!w.includes('<button'));}
 assert.equal(nodes.get('#crumb').textContent,'Main workspace / Overview');assert(nodes.get('#main').innerHTML.includes('Workspace <b>Main workspace</b>'));
-vm.runInContext("wsManage()",ctx);{const f=nodes.get('#fields').innerHTML;assert(f.includes('data-ws-open="2"'));assert(f.includes('data-ws-del="2"'));assert(f.includes('Kunde &lt;AG&gt;'));assert(f.includes('Vertrag 2026'));}
+await vm.runInContext("acct('workspaces')",ctx);{const f=nodes.get('#fields').innerHTML;assert(f.includes('data-acct="workspaces"'));assert(f.includes('name="name"'));assert(f.includes('data-ws-open="2"'));assert(f.includes('data-ws-del="2"'));assert(f.includes('Kunde &lt;AG&gt;'));assert(f.includes('Vertrag 2026'));}
 vm.runInContext("closeModal();wsDelete(2)",ctx);{const f=nodes.get('#fields').innerHTML;assert(f.includes('name="password"'));assert(f.includes('Type the name “Kunde &lt;AG&gt;”'));}
-vm.runInContext("closeModal();user.role='editor';renderWs()",ctx);assert(!nodes.get('#wsbox').innerHTML.includes('data-ws-manage'));
+vm.runInContext("closeModal();user.role='editor';renderWs()",ctx);assert(nodes.get('#wsbox').innerHTML.includes('id="ws-select"'));
+vm.runInContext("closeModal()",ctx);await vm.runInContext("acct('workspaces')",ctx);{const f=nodes.get('#fields').innerHTML;assert(!f.includes('data-acct="workspaces"'));assert(!f.includes('data-ws-del'));}
 vm.runInContext("user.role='admin';page='map';render()",ctx);
 vm.runInContext("page='devices';render()",ctx);assert(nodes.get('#main').innerHTML.includes('CONNECTIONS'));
 vm.runInContext("edit('links',0,{from:'20',to:'2'})",ctx);assert(nodes.get('#fields').innerHTML.includes('<option value="20" selected>'));

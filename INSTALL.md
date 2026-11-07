@@ -242,7 +242,7 @@ Parameters (all optional):
 | `scope` | `current` (in progress + planned), `active`, `upcoming`, `completed`, `all` | `current` |
 | `days` | planned entries up to N days ahead (1-365) | `90` |
 | `past` | completed entries of the last N days for `completed`/`all` (1-365) | `30` |
-| `workspace` | only entries of this workspace (numeric ID, shown under ⚙ Manage workspaces) | all workspaces |
+| `workspace` | only entries of this workspace (numeric ID, shown under My account → Workspaces) | all workspaces |
 
 Response:
 

@@ -47,7 +47,7 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 </section>
 
 <section id="interface"><h2>The interface</h2>
-<p>The sidebar on the left leads to all modules. Your name at the bottom of the sidebar opens <b>My account</b>: password, <b>Info</b> with the version and this manual, and for administrators user management, audit log and export &amp; import. The footer of each page shows the installed version.</p>
+<p>The sidebar on the left leads to all modules. Your name at the bottom of the sidebar opens <b>My account</b>: password, <b>Info</b> with the version and this manual, and for administrators user management, workspaces, audit log and export &amp; import. The footer of each page shows the installed version.</p>
 <?=fig('overview','Overview with counters, location filter, search and all devices')?>
 <ul>
 <li><b>Overview</b> shows counters for devices, locations, IP records and credentials, followed by all devices.</li>
@@ -60,7 +60,7 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 <section id="workspaces"><h2>Workspaces</h2>
 <p>A workspace keeps the data of one customer or project apart. Choose it in the box <b>WORKSPACE</b> at the top of the sidebar; its name is shown in the header. Each workspace has its own locations, devices, IP addresses, credentials and files, racks, connection maps, documentation and maintenance windows. Users, the audit log, the software library and API tokens are shared by all workspaces.</p>
 <ul>
-<li><b>Manage</b> (administrators): the ⚙ button next to the selection creates, renames and deletes workspaces. Deleting removes all content of the workspace and asks for the name of the workspace and your password.</li>
+<li><b>Manage</b> (administrators): your name at the bottom of the sidebar → <b>My account</b> → tab <b>Workspaces</b> creates, renames, opens and deletes workspaces. Deleting removes all content of the workspace and asks for the name of the workspace and your password.</li>
 <li><b>Export &amp; import</b> always work on the open workspace. To move a customer into its own workspace: export, create the new workspace, open it, import.</li>
 <li>Existing data from earlier versions is in <b>Main workspace</b>.</li>
 </ul>

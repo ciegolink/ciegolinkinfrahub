@@ -5,7 +5,7 @@ Versioning: MAJOR.MINOR.PATCH - MINOR for new features, PATCH for fixes. A MAJOR
 Update: see `UPDATE.md` (`docker compose up -d --build`). No manual steps unless stated.
 
 ## 1.0.1 - 2026-11-07
-- **Workspaces**: one workspace per customer or project, chosen at the top of the sidebar. Locations, devices, IP addresses, credentials and files, racks, connection maps, documentation and maintenance windows belong to one workspace; users, audit log, software library and API tokens are shared. Administrators create, rename and delete workspaces (⚙ next to the selection; deleting needs the workspace name and the current password). Export and import work on the open workspace.
+- **Workspaces**: one workspace per customer or project, chosen at the top of the sidebar. Locations, devices, IP addresses, credentials and files, racks, connection maps, documentation and maintenance windows belong to one workspace; users, audit log, software library and API tokens are shared. Administrators create, rename and delete workspaces under My account → Workspaces (deleting needs the workspace name and the current password). Export and import work on the open workspace.
 - **Several connection maps** per workspace (tabs). A map shows only the devices and elements added to it (**＋ Add to map**, **✕** hides a box on one map); positions are stored per map. Deleting a map keeps devices, elements and connections.
 - **Zoom** on connection maps: buttons (−, ＋, Fit, 100 %), Ctrl + mouse wheel and trackpad pinch; remembered per map on the device.
 - Maintenance API: optional parameter `workspace=<ID>`; every item contains `workspace` (id, name).
