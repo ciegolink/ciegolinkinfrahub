@@ -246,6 +246,7 @@ function systemInfo():array {
             ['name'=>'marked','version'=>'12.0.2','use'=>'Markdown rendering (documentation)','license'=>'MIT'],
             ['name'=>'Turndown','version'=>'7.2.0','use'=>'Visual editor to Markdown (documentation)','license'=>'MIT'],
             ['name'=>'turndown-plugin-gfm','version'=>'1.0.2','use'=>'Tables and strikethrough in Markdown','license'=>'MIT'],
+            ['name'=>'qrcode-generator','version'=>'2.0.4','use'=>'QR code for the 2FA setup','license'=>'MIT'],
             ['name'=>'DOMPurify','version'=>'3.1.6','use'=>'HTML sanitising (documentation)','license'=>'Apache-2.0 / MPL-2.0'],
             ['name'=>'asyncssh','version'=>(string)($gw['asyncssh']??'—'),'use'=>'SSH gateway (optional service)','license'=>'EPL-2.0 / GPL-2.0+'],
             ['name'=>'aiohttp','version'=>(string)($gw['aiohttp']??'—'),'use'=>'SSH gateway WebSocket','license'=>'Apache-2.0'],

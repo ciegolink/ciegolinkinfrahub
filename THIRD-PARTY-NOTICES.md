@@ -12,6 +12,7 @@ It includes or uses the following third-party components, each under its own lic
 | DOMPurify | 3.1.6 | Apache-2.0 or MPL-2.0 (used under Apache-2.0) | `public/assets/vendor/markdown/LICENSE-dompurify.txt` |
 | Turndown | – | MIT | `public/assets/vendor/markdown/LICENSE-turndown.txt` |
 | turndown-plugin-gfm | – | MIT, Copyright (c) 2017 Dom Christie | (same terms as Turndown) |
+| qrcode-generator | 2.0.4 | MIT, Copyright (c) 2009 Kazuhiko Arase | `public/assets/vendor/qrcode/LICENSE-qrcode-generator.txt` |
 
 ## Installed at build time (not included in this repository)
 

@@ -229,3 +229,5 @@ a.iconbtn{border:1px solid var(--line);border-radius:7px;color:#a8aba5;backgroun
 #fields .wsaccess label{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13.5px}
 #fields .wsaccess label span{min-width:0;overflow-wrap:anywhere}
 #fields .wsaccess select,#fields select[data-member]{width:auto;min-width:230px}
+/* 2FA setup QR code */
+.qrbox{width:232px;max-width:100%;padding:10px;background:#fff;border-radius:12px;margin:6px 0 14px}.qr{display:block;width:100%;height:auto}

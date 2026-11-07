@@ -39,7 +39,7 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 <ol>
 <li><b>First sign-in:</b> enter username and temporary password, leave the 2FA field empty.</li>
 <li><b>Set your own password:</b> at least 14 characters. Other sessions of your account end.</li>
-<li><b>Set up two-factor authentication:</b> add the shown setup key manually to an authenticator app (e.g. Google Authenticator, Microsoft Authenticator, 1Password, Bitwarden) as TOTP with 6 digits and 30 seconds, then confirm with the current code.</li>
+<li><b>Set up two-factor authentication:</b> scan the shown QR code with an authenticator app (e.g. Google Authenticator, Microsoft Authenticator, 1Password, Bitwarden), or add the setup key below it manually as TOTP with 6 digits and 30 seconds, then confirm with the current code.</li>
 <li><b>Later sign-ins:</b> username, password and the current 6-digit code from the app.</li>
 </ol>
 <?=fig('login','Sign-in with username, password and 2FA code')?>
@@ -216,7 +216,7 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 <?=fig('account-users','User management')?>
 <h3>User management (administrators)</h3>
 <ul>
-<li><b>＋ Add user:</b> name, username, role and a temporary password. The new user sets their own password and 2FA on first sign-in.</li>
+<li><b>＋ Add user:</b> name, username, role, workspace access and a temporary password. The new user sets their own password and 2FA on first sign-in.</li>
 <li><b>Manage:</b> change name, role or status (active / disabled). Saving ends the user's current sessions.</li>
 <li>Lost 2FA device: the server administrator resets password and 2FA on the command line (see <a href="#faq">Troubleshooting</a>).</li>
 </ul>
