@@ -4,6 +4,16 @@ The current version is in the file `VERSION` and is shown in the footer of every
 Versioning: MAJOR.MINOR.PATCH - MINOR for new features, PATCH for fixes. A MAJOR change would need a data migration and is announced here.
 Update: see `UPDATE.md` (`docker compose up -d --build`). No manual steps unless stated.
 
+## 1.0.1 - 2026-11-07
+- **Workspaces**: one workspace per customer or project, chosen at the top of the sidebar. Locations, devices, IP addresses, credentials and files, racks, connection maps, documentation and maintenance windows belong to one workspace; users, audit log, software library and API tokens are shared. Administrators create, rename and delete workspaces (⚙ next to the selection; deleting needs the workspace name and the current password). Export and import work on the open workspace.
+- **Several connection maps** per workspace (tabs). A map shows only the devices and elements added to it (**＋ Add to map**, **✕** hides a box on one map); positions are stored per map. Deleting a map keeps devices, elements and connections.
+- **Zoom** on connection maps: buttons (−, ＋, Fit, 100 %), Ctrl + mouse wheel and trackpad pinch; remembered per map on the device.
+- Maintenance API: optional parameter `workspace=<ID>`; every item contains `workspace` (id, name).
+- Export format version 2: `workspace` name and `maps` (with box positions) instead of `map_position` per device/element. Exports of 1.0.0 can still be imported; their positions become the map "Main map".
+- `update.sh`: update with backup (database, key, software, old files), `git pull` or `--source <zip>`, build, health and version check and automatic rollback; `--rollback` by hand; `--install-timer` for automatic updates of new versions (systemd).
+- Docker images are tagged 1.0.1, so the 1.0.0 images stay available for a rollback.
+- Automatic migration on the first request after the update: existing data goes into "Main workspace", the existing map becomes "Main map" with all boxes at their current positions. No manual steps.
+
 ## 1.0.0 - 2026-10-24
 First versioned release.
 

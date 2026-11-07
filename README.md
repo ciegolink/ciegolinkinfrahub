@@ -16,7 +16,7 @@ The script asks for the URL, creates `.env`, starts the containers and shows the
 | Document | Content |
 |---|---|
 | **`INSTALL.md`** | Installation with Docker, reverse proxy, SSH terminal, maintenance API, backup, account recovery, security |
-| **`UPDATE.md`** | Updating and rolling back |
+| **`UPDATE.md`** | Updating (`sudo bash update.sh`, optional automatic updates) and rolling back |
 | `CHANGELOG.md` | Changes per version |
 | `TESTS.md` | Automated tests (development) |
 | `INSTALL-CLASSIC.md` | Only for servers without Docker (Apache + PHP, shared hosting) |
@@ -29,6 +29,7 @@ The script asks for the URL, creates `.env`, starts the containers and shows the
 | `docker/gateway.Dockerfile` | Image of the SSH gateway |
 | `docker-compose.yml`, `.env.example` | Containers, volumes, settings |
 | `public/` | Web interface, API, user manual |
+| `install.sh`, `update.sh` | Installation; update with backup, check and automatic rollback |
 | `core.php`, `bin/` | Application core, command line tool (create admin, reset user) |
 | `ssh-gateway/` | Source of the SSH gateway |
 | `tests/` | Automated tests (not part of the image) |

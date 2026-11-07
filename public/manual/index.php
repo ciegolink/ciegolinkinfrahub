@@ -12,11 +12,12 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 <nav>
 <a href="#start">Getting started</a>
 <a href="#interface">The interface</a>
+<a href="#workspaces">Workspaces</a>
 <a href="#locations">Locations</a>
 <a href="#devices">Servers &amp; devices</a>
 <a href="#ips">IP management</a>
 <a href="#racks">Racks</a>
-<a href="#map">Connection map</a>
+<a href="#map">Connection maps</a>
 <a href="#vault">Password manager</a>
 <a href="#docs">Documentation</a>
 <a href="#maintenance">Maintenance</a>
@@ -53,6 +54,15 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 <li><b>Location filter</b> (top left of the list) limits devices, IP addresses and racks to one location.</li>
 <li><b>Search</b> filters live and also searches notes, installed software, Docker images and IP addresses.</li>
 <li>Status colours: <span class="dot up"></span> reachable, <span class="dot partial"></span> partly reachable, <span class="dot down"></span> no response, <span class="dot"></span> not checked.</li>
+</ul>
+</section>
+
+<section id="workspaces"><h2>Workspaces</h2>
+<p>A workspace keeps the data of one customer or project apart. Choose it in the box <b>WORKSPACE</b> at the top of the sidebar; its name is shown in the header. Each workspace has its own locations, devices, IP addresses, credentials and files, racks, connection maps, documentation and maintenance windows. Users, the audit log, the software library and API tokens are shared by all workspaces.</p>
+<ul>
+<li><b>Manage</b> (administrators): the ⚙ button next to the selection creates, renames and deletes workspaces. Deleting removes all content of the workspace and asks for the name of the workspace and your password.</li>
+<li><b>Export &amp; import</b> always work on the open workspace. To move a customer into its own workspace: export, create the new workspace, open it, import.</li>
+<li>Existing data from earlier versions is in <b>Main workspace</b>.</li>
 </ul>
 </section>
 
@@ -116,15 +126,18 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 </ul>
 </section>
 
-<section id="map"><h2>Connection map</h2>
-<p>The map shows what is connected to what: devices plus <b>elements</b> such as websites, streams or external services.</p>
+<section id="map"><h2>Connection maps</h2>
+<p>A map shows what is connected to what: devices plus <b>elements</b> such as websites, streams or external services. A workspace can have several maps, e.g. <i>Network</i>, <i>Streaming</i> or one per site; switch between them with the tabs above the map.</p>
 <?=fig('map','Connection map with devices, elements and labelled connections')?>
 <ul>
-<li><b>Arrange:</b> drag boxes; positions are saved for everyone.</li>
+<li><b>New map:</b> <b>＋ New map</b>. <b>Edit map</b> renames or deletes the open map; deleting a map keeps its devices, elements and connections.</li>
+<li><b>Only what you need:</b> a map shows only the boxes added to it. <b>＋ Add to map</b> lists all devices and elements that are not on the map yet (with filter); <b>✕</b> on a box hides it on this map only. New elements created on a map are added to it automatically.</li>
+<li><b>Zoom:</b> the buttons <b>−</b>, <b>＋</b>, <b>Fit</b> (whole map in the window) and the percentage (back to 100 %), or Ctrl + mouse wheel and pinch on a trackpad. The zoom level is remembered per map on your device.</li>
+<li><b>Arrange:</b> drag boxes; positions are saved per map for everyone.</li>
 <li><b>Connect:</b> drag from the round handle on the right side of a box onto another box, then enter a label, e.g. <code>HTTPS</code>, <code>SRT :9000</code> or <code>NFS media</code>. Alternatively use <b>＋ Connection</b>.</li>
 <li><b>Several connections</b> between the same two boxes share one line; their labels are stacked on it.</li>
 <li>Click a label to rename or delete the connection; click a box to edit it. <b>↗</b> opens the link of a box.</li>
-<li>The dot in a box shows the reachability of the device.</li>
+<li>The dot in a box shows the reachability of the device. A connection is shown on every map that contains both of its boxes.</li>
 </ul>
 </section>
 
@@ -225,11 +238,11 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 <table><thead><tr><th>Permission</th><th>Read</th><th>Edit</th><th>Administrator</th></tr></thead><tbody>
 <tr><td>View all modules, search, ping</td><td>✓</td><td>✓</td><td>✓</td></tr>
 <tr><td>Show and copy passwords, download files and software</td><td>✓</td><td>✓</td><td>✓</td></tr>
-<tr><td>Create, edit and delete entries, arrange the map, mount rack items</td><td>–</td><td>✓</td><td>✓</td></tr>
+<tr><td>Create, edit and delete entries, create and arrange maps, mount rack items</td><td>–</td><td>✓</td><td>✓</td></tr>
 <tr><td>Upload files and software</td><td>–</td><td>✓</td><td>✓</td></tr>
 <tr><td>Read documentation</td><td>✓</td><td>✓</td><td>✓</td></tr>
 <tr><td>Write, change and delete documentation</td><td>–</td><td>✓</td><td>✓</td></tr>
-<tr><td>Manage users, audit log, export &amp; import, server details in Info</td><td>–</td><td>–</td><td>✓</td></tr>
+<tr><td>Manage users and workspaces, audit log, export &amp; import, server details in Info</td><td>–</td><td>–</td><td>✓</td></tr>
 <tr><td>SSH terminal</td><td>–</td><td>–</td><td>✓</td></tr>
 </tbody></table>
 <p>Two-factor authentication is mandatory for every role.</p>

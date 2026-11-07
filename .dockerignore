@@ -10,3 +10,5 @@ ssh-gateway/gateway.env
 *.zip
 apache-ciegolinkinfrahub.conf
 install.sh
+.update
+update.sh

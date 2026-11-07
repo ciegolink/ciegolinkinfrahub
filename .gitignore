@@ -3,3 +3,4 @@
 /ssh-gateway/gateway.env
 /.env
 /apache-ciegolinkinfrahub.conf
+/.update/

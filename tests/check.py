@@ -12,10 +12,10 @@ class API:
         self.base = base
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
         self.csrf = ''
-    def call(self, action, data=None, token=None):
+    def call(self, action, data=None, token=None, ws=None):
         headers = {'Content-Type':'application/json'}
         if data is not None: headers['X-CSRF-Token'] = self.csrf if token is None else token
-        req = urllib.request.Request(self.base+'/api.php?action='+action, data=None if data is None else json.dumps(data).encode(), headers=headers)
+        req = urllib.request.Request(self.base+'/api.php?action='+action+('' if ws is None else f'&ws={ws}'), data=None if data is None else json.dumps(data).encode(), headers=headers)
         try:
             with self.opener.open(req, timeout=5) as r: status, out = r.status, json.load(r)
         except urllib.error.HTTPError as e:
@@ -134,15 +134,65 @@ class SecurityChecks(unittest.TestCase):
         self.assertEqual(self.save('links',{'name':'HTTPS','from':str(el['id']),'to':str(dev['id'])})[0],200)
         self.assertEqual(self.save('links',{'name':'Self','from':str(el['id']),'to':str(el['id'])})[0],400)
         self.assertEqual(self.save('links',{'name':'To building','from':str(el['id']),'to':str(b)})[0],400)
-        self.assertEqual(self.reader.call('position',{'id':dev['id'],'x':100,'y':200})[0],403)
-        st,out=self.editor.call('position',{'id':dev['id'],'x':120,'y':999999})
-        self.assertEqual(st,200);dev=next(r for r in self.records() if r['id']==dev['id'])
-        self.assertEqual((dev['data']['x'],dev['data']['y'],dev['revision']),(120,4000,out['revision']))
-        d=dict(dev['data']);d.pop('x');d.pop('y')
-        self.assertEqual(self.admin.call('save',{'kind':'devices','id':dev['id'],'revision':dev['revision'],'data':d})[0],200)
-        dev=next(r for r in self.records() if r['id']==dev['id']);self.assertEqual(dev['data']['x'],120)
+        self.assertEqual(self.save('maps',{'name':'Main'},self.reader)[0],403)
+        st,out=self.save('maps',{'name':'Main','note':''});self.assertEqual(st,200,out);mid=out['id']
+        place=lambda api,items,action='map_place',m=None:api.call(action,{'map':m or mid,'items':items})
+        self.assertEqual(place(self.reader,[{'id':dev['id'],'x':100,'y':200}])[0],403)
+        st,out=place(self.editor,[{'id':dev['id'],'x':120,'y':999999},{'id':el['id'],'x':10,'y':-5}]);self.assertEqual(st,200,out)
+        nodes={n['node']:n for n in self.admin.call('list',{})[1]['map_nodes'] if n['map']==mid}
+        self.assertEqual((nodes[dev['id']]['x'],nodes[dev['id']]['y'],nodes[el['id']]['y']),(120,4000,0))
+        self.assertEqual(place(self.editor,[{'id':dev['id'],'x':300,'y':40}])[0],200)  # move = upsert
+        self.assertEqual(next(n for n in self.admin.call('list',{})[1]['map_nodes'] if n['map']==mid and n['node']==dev['id'])['x'],300)
+        self.assertEqual(place(self.editor,[{'id':int(b),'x':1,'y':1}])[0],404)  # locations are no boxes
+        self.assertEqual(place(self.editor,[{'id':dev['id'],'x':1,'y':1}],m=999999)[0],404)
+        self.assertEqual(place(self.editor,[])[0],400)
+        st,out=self.save('maps',{'name':'Second'});m2=out['id']
+        self.assertEqual(place(self.editor,[{'id':el['id'],'x':5,'y':5}],m=m2)[0],200)
+        self.assertEqual(place(self.editor,[{'id':el['id']}],'map_remove')[0],200)  # hidden on Main only
+        nodes=[(n['map'],n['node']) for n in self.admin.call('list',{})[1]['map_nodes']]
+        self.assertNotIn((mid,el['id']),nodes);self.assertIn((m2,el['id']),nodes);self.assertIn((mid,dev['id']),nodes)
+        self.assertTrue(any(r['kind']=='links' for r in self.records()))  # hiding keeps the connection
+        m2r=next(r for r in self.records() if r['id']==m2)
+        self.assertEqual(self.admin.call('delete',{'id':m2,'revision':m2r['revision']})[0],200)
+        self.assertFalse(any(n['map']==m2 for n in self.admin.call('list',{})[1]['map_nodes']))
+        self.assertTrue(any(r['id']==el['id'] for r in self.records()))  # deleting a map keeps its boxes
         self.assertEqual(self.admin.call('delete',{'id':el['id'],'revision':el['revision']})[0],200)
         self.assertFalse(any(r['kind']=='links' for r in self.records()))
+    def test_05f_workspaces(self):
+        st,out=self.admin.call('list',{});self.assertEqual(st,200);main=out['ws']
+        self.assertTrue(any(w['id']==main for w in out['workspaces']))
+        self.assertEqual(self.editor.call('workspace_save',{'name':'Kunde A'})[0],403)
+        self.assertEqual(self.admin.call('workspace_save',{'name':''})[0],422)
+        st,out=self.admin.call('workspace_save',{'name':'Kunde A','note':'Vertrag'});self.assertEqual(st,200,out);ka=out['id']
+        self.assertEqual(self.admin.call('workspace_save',{'name':'kunde a'})[0],409)
+        st,out=self.admin.call('save',{'kind':'buildings','data':{'name':'Kunde A RZ'}},ws=ka);self.assertEqual(st,200,out);loc=out['id']
+        st,out=self.admin.call('save',{'kind':'devices','data':{'name':'Kunde A server','building':str(loc)}},ws=ka);self.assertEqual(st,200,out);dv=out['id']
+        st,out=self.admin.call('save',{'kind':'credentials','data':{'name':'Kunde A login','username':'root','password':'Kunde-A-Secret'}},ws=ka);cid=out['id']
+        st,out=self.editor.call('doc_save',{'title':'Kunde A runbook','body':'x'},ws=ka);self.assertEqual(st,200,out);did=out['id']
+        recs=self.reader.call('list',{},ws=ka)[1]
+        self.assertEqual(recs['ws'],ka);self.assertEqual({r['data']['name'] for r in recs['records']},{'Kunde A RZ','Kunde A server','Kunde A login'})
+        self.assertFalse(any(r['id'] in (loc,dv,cid) for r in self.records()))  # not visible in the main workspace
+        self.assertFalse(any(d['id']==did for d in self.reader.call('docs',{})[1]['docs']))
+        self.assertEqual(self.reader.call('doc',{'id':did})[0],404)
+        self.assertEqual(self.reader.call('reveal',{'id':cid})[0],404)
+        self.assertEqual(self.reader.call('reveal',{'id':cid},ws=ka)[1]['password'],'Kunde-A-Secret')
+        mb=next(r for r in self.records() if r['kind']=='buildings')
+        self.assertEqual(self.admin.call('save',{'kind':'devices','data':{'name':'Cross','building':str(mb['id'])}},ws=ka)[0],400)  # location of another workspace
+        d=next(r for r in recs['records'] if r['id']==dv)
+        self.assertEqual(self.admin.call('save',{'kind':'devices','id':dv,'revision':d['revision'],'data':d['data']})[0],404)  # wrong workspace
+        self.assertEqual(self.admin.call('delete',{'id':dv,'revision':d['revision']})[0],404)
+        exp=self.admin.call('export',{},ws=ka)[1];self.assertEqual(exp['workspace'],'Kunde A');self.assertEqual([x['name'] for x in exp['devices']],['Kunde A server'])
+        self.assertEqual([x['title'] for x in exp['docs']],['Kunde A runbook'])
+        self.assertEqual(self.admin.call('workspace_delete',{'id':ka,'name':'Kunde A','password':'wrong'})[0],403)
+        self.assertEqual(self.admin.call('workspace_delete',{'id':ka,'name':'Kunde B','password':'Test-only-password-123!'})[0],422)
+        self.assertEqual(self.editor.call('workspace_delete',{'id':ka,'name':'Kunde A','password':'Test-only-password-123!'})[0],403)
+        self.assertEqual(self.admin.call('workspace_delete',{'id':ka,'name':'Kunde A','password':'Test-only-password-123!'})[0],200)
+        self.assertEqual(self.admin.call('save',{'kind':'buildings','data':{'name':'Gone'}},ws=ka)[0],409)
+        st,out=self.admin.call('list',{},ws=ka);self.assertEqual(st,200);self.assertEqual(out['ws'],main)  # falls back for reading
+        self.assertEqual(self.admin.call('workspace_delete',{'id':main,'name':out['workspaces'][0]['name'],'password':'Test-only-password-123!'})[0],409)  # last one stays
+        import sqlite3
+        db=sqlite3.connect(self.folder/'infra.sqlite');left=db.execute('SELECT COUNT(*) FROM records WHERE ws=?',(ka,)).fetchone()[0]+db.execute('SELECT COUNT(*) FROM docs WHERE ws=?',(ka,)).fetchone()[0];db.close()
+        self.assertEqual(left,0)
     def test_05e_display_name(self):
         self.assertEqual(self.admin.call('user_create',{'username':'named-user','display_name':'Anna Muster','password':'Testing-temporary-pass!','role':'editor'})[0],200)
         users=self.admin.call('users',{})[1]['users'];u=next(x for x in users if x['username']=='named-user')
@@ -290,7 +340,7 @@ class SecurityChecks(unittest.TestCase):
         self.assertEqual(self.save('credentials',{'name':'Export secret','username':'exp','password':'S3cret-für-Export'})[0],200)
         st,out=self.admin.call('export',{})
         self.assertEqual(st,200);self.assertEqual(out['format'],'ciegolink-infrahub-export')
-        for k in ['locations','devices','ip_addresses','credentials','elements','connections','software','users']:self.assertIn(k,out)
+        for k in ['locations','devices','ip_addresses','credentials','elements','connections','maps','software','users','workspace']:self.assertIn(k,out)
         c=next(x for x in out['credentials'] if x['name']=='Export secret')
         self.assertNotIn('password',c);self.assertFalse(out['includes_passwords'])
         self.assertNotIn('hash',json.dumps(out['users']));self.assertNotIn('totp',json.dumps(out['users']))

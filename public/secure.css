@@ -211,3 +211,16 @@ a.iconbtn{border:1px solid var(--line);border-radius:7px;color:#a8aba5;backgroun
 #fields code.secret{display:block;margin:8px 0 12px}
 .mdevs{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin-top:8px}.mdevloc{font:10px Mono;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:8px 0 4px}.mdev{display:flex!important;align-items:center;gap:8px;padding:4px 0;cursor:pointer;font-size:13.5px}.mdev input{width:auto;margin:0}.mdev small{color:var(--muted);font-size:12px}.mdev[hidden]{display:none!important}#m-devn{color:var(--muted)}.mdevlist{display:flex;flex-wrap:wrap;gap:4px 12px;margin:4px 0;font-size:12.5px;color:#bfc8be}
 #fields .mdev{display:flex!important;justify-content:flex-start;font-size:13.5px}#fields .mdev input{width:auto;flex:none;margin:0}#fields .mdev span{flex:1;min-width:0}#fields .mdev small{white-space:nowrap;word-break:normal;overflow-wrap:normal}#fields .mdevhead{display:flex!important;gap:8px;align-items:baseline}
+
+/* Workspaces */
+#wsbox{margin:0 6px 18px}#wsbox:empty{display:none}#wsbox small{display:block;font:10px Mono,monospace;letter-spacing:.14em;color:var(--muted);margin:0 4px 6px}
+.wsrow{display:flex;gap:6px;align-items:stretch}.wsrow select{flex:1;min-width:0;width:100%;padding:8px 10px;font-size:13.5px;font-weight:600;background:#24262a}.wsrow button{flex:none;padding:6px 10px;font-size:14px;line-height:1}
+@media(max-width:700px){#wsbox{margin:10px 0 6px}#wsbox small{display:none}}
+/* Connection maps: tabs, zoom, hide */
+.maptabs{display:flex;justify-content:space-between;align-items:flex-start;gap:8px 16px;flex-wrap:wrap;flex:none}.maptabs .iptabs{margin:0 0 12px}
+.mapctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.zoomctl{display:inline-flex;gap:3px;align-items:center}.zoomctl button{min-width:36px;padding:6px 9px;line-height:1.2}#zoomval{min-width:62px;font:12px Mono,monospace}
+.mapsizer{position:relative;min-width:100%;min-height:100%}
+.mapcanvas{position:absolute;left:0;top:0;min-width:0;min-height:0;transform-origin:0 0}
+.nodehide{position:absolute;right:8px;bottom:6px;width:22px;height:22px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:11px;line-height:22px;text-align:center;opacity:0;cursor:pointer;z-index:1}
+.mapnode:hover .nodehide,.nodehide:focus-visible{opacity:1}.nodehide:hover{background:#e5484d22;color:#f2a3a3}
+@media(hover:none){.nodehide{opacity:.75}}

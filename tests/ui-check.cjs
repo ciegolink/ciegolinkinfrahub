@@ -68,7 +68,25 @@ vm.runInContext("closeModal();edit('devices',2)",ctx);assert(nodes.get('#fields'
 vm.runInContext("page='devices';search='';filter='';pings[2]={at:'2026-10-22T20:00:00Z',results:[{ip:'198.51.100.10',type:'external',up:true,ms:0.4,method:'icmp'},{ip:'2001:db8::10',type:'external',up:false,ms:null,method:'icmp'}]};render()",ctx);
 {const m=nodes.get('#main').innerHTML;assert(m.includes('data-ping="2"'));assert(m.includes('data-ping-all="1"'));assert(m.includes('dot up'));assert(m.includes('dot down'));assert(m.includes('1/2 online'));}
 vm.runInContext("closeModal();user.role='admin';records.push({id:20,kind:'elements',revision:1,data:{name:'Website',type:'Website',url:'https://www.aw.plus'}},{id:21,kind:'links',revision:1,data:{name:'HTTPS',from:'20',to:'2'}});page='map';render()",ctx);
-{const m=nodes.get('#main').innerHTML;assert(m.includes('data-node="20"'));assert(m.includes('data-node="2"'));assert(m.includes('www.aw.plus'));assert(m.includes('data-label="21"'));assert(m.includes('data-handle="20"'));}
+{const m=nodes.get('#main').innerHTML;assert(m.includes('No map yet'));assert(m.includes('data-new="maps"'));assert(!m.includes('data-node='));}
+vm.runInContext("records.push({id:22,kind:'maps',revision:1,data:{name:'Streaming <s>',note:''}},{id:23,kind:'maps',revision:1,data:{name:'Empty',note:''}});mapNodesData=[{map:22,node:20,x:40,y:40},{map:22,node:2,x:400,y:40}];mapId=22;render()",ctx);
+{const m=nodes.get('#main').innerHTML;assert(m.includes('data-node="20"'));assert(m.includes('data-node="2"'));assert(m.includes('www.aw.plus'));assert(m.includes('data-label="21"'));assert(m.includes('data-handle="20"'));assert(m.includes('data-maptab="22"'));assert(m.includes('Streaming &lt;s&gt;'));assert(m.includes('data-map-hide="2"'));assert(m.includes('data-zoom="fit"'));assert(m.includes('data-zoom="in"'));assert(m.includes('data-map-add="1"'));assert(m.includes('id="mapsizer"'));}
+vm.runInContext("mapNodesData=mapNodesData.filter(n=>n.node!==2);render()",ctx);
+{const m=nodes.get('#main').innerHTML;assert(m.includes('data-node="20"'));assert(!m.includes('data-node="2"'));assert(!m.includes('data-label="21"'));}
+vm.runInContext("mapAdd()",ctx);{const f=nodes.get('#fields').innerHTML;assert(f.includes('value="2"'));assert(!f.includes('value="20"'));assert(f.includes('id="map-all"'));}
+vm.runInContext("closeModal();edit('links',0,{from:'20',to:''})",ctx);assert(!nodes.get('#fields').innerHTML.includes('<option value="2"'));
+assert.deepEqual(JSON.parse(vm.runInContext("JSON.stringify(mapSpots(5))",ctx)),[{x:40,y:178},{x:330,y:178},{x:620,y:178},{x:910,y:178},{x:40,y:308}]);
+vm.runInContext("closeModal();mapId=23;render()",ctx);{const m=nodes.get('#main').innerHTML;assert(m.includes('This map is empty'));assert(!m.includes('data-zoom='));}
+vm.runInContext("edit('maps',23)",ctx);assert(nodes.get('#fields').innerHTML.includes('Delete map'));
+vm.runInContext("closeModal();user.role='reader';render()",ctx);{const m=nodes.get('#main').innerHTML;assert(!m.includes('data-new="maps"'));assert(!m.includes('data-map-add'));}
+vm.runInContext("user.role='reader';mapId=22;mapNodesData.push({map:22,node:2,x:400,y:40});render()",ctx);{const m=nodes.get('#main').innerHTML;assert(m.includes('data-zoom="fit"'));assert(!m.includes('data-map-hide'));}
+vm.runInContext("user.role='admin';workspaces=[{id:1,name:'Main workspace',note:'',records:5,docs:1},{id:2,name:'Kunde <AG>',note:'Vertrag 2026',records:0,docs:0}];wsId=1;renderWs();page='overview';render()",ctx);
+{const w=nodes.get('#wsbox').innerHTML;assert(w.includes('id="ws-select"'));assert(w.includes('Kunde &lt;AG&gt;'));assert(w.includes('value="1" selected'));assert(w.includes('data-ws-manage'));}
+assert.equal(nodes.get('#crumb').textContent,'Main workspace / Overview');assert(nodes.get('#main').innerHTML.includes('Workspace <b>Main workspace</b>'));
+vm.runInContext("wsManage()",ctx);{const f=nodes.get('#fields').innerHTML;assert(f.includes('data-ws-open="2"'));assert(f.includes('data-ws-del="2"'));assert(f.includes('Kunde &lt;AG&gt;'));assert(f.includes('Vertrag 2026'));}
+vm.runInContext("closeModal();wsDelete(2)",ctx);{const f=nodes.get('#fields').innerHTML;assert(f.includes('name="password"'));assert(f.includes('Type the name “Kunde &lt;AG&gt;”'));}
+vm.runInContext("closeModal();user.role='editor';renderWs()",ctx);assert(!nodes.get('#wsbox').innerHTML.includes('data-ws-manage'));
+vm.runInContext("user.role='admin';page='map';render()",ctx);
 vm.runInContext("page='devices';render()",ctx);assert(nodes.get('#main').innerHTML.includes('CONNECTIONS'));
 vm.runInContext("edit('links',0,{from:'20',to:'2'})",ctx);assert(nodes.get('#fields').innerHTML.includes('<option value="20" selected>'));
 vm.runInContext("closeModal();user.role='reader';page='map';render()",ctx);assert(!nodes.get('#main').innerHTML.includes('data-handle='));
@@ -115,5 +133,5 @@ vm.runInContext("closeModal();user.role='admin';docList=[{id:5,title:'Runbook <x
 vm.runInContext("startDocEdit(docCur)",ctx);{const d=nodes.get('#docpane').innerHTML;assert(d.includes('data-cmd="bold"'));assert(d.includes('data-docmode="md"'));assert(d.includes('id="doc-visual"'));}
 vm.runInContext("docEdit=null;docDirty=false;user.role='reader';render()",ctx);{const m=nodes.get('#main').innerHTML;assert(!m.includes('data-doc-new'));assert(!nodes.get('#docpane').innerHTML.includes('data-doc-edit'));}
 vm.runInContext("user.role='admin';docCur=null",ctx);
-console.log('PASS: info tab with manual, audit paging + search, system tab, half-width rack items, IP links, version, software library, export & import in account popup, CSV escaping, full-page map, stats only on overview, IP type list, device credentials copy, autofill off, connection map, admin popup, device ping, Web control, IP sort ascending, list inputs, Webmin field, IP range tabs, English forms, wide fields, external IP and software search, Files button, escaped filenames, reader UI permissions.');
+console.log('PASS: workspaces (switcher, manage, delete confirmation), several connection maps, hide boxes per map, add-to-map picker, zoom controls, info tab with manual, audit paging + search, system tab, half-width rack items, IP links, version, software library, export & import in account popup, CSV escaping, full-page map, stats only on overview, IP type list, device credentials copy, autofill off, connection map, admin popup, device ping, Web control, IP sort ascending, list inputs, Webmin field, IP range tabs, English forms, wide fields, external IP and software search, Files button, escaped filenames, reader UI permissions.');
 })().catch(e=>{console.error(e);process.exitCode=1});

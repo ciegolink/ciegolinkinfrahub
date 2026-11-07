@@ -20,9 +20,10 @@ try {
     $days=max(1,min(365,(int)($_GET['days']??90)));
     $past=max(1,min(365,(int)($_GET['past']??30)));
     $now=time();$items=[];
-    foreach(query("SELECT id,data FROM records WHERE kind='maintenance'")->fetchAll() as $r){
+    $wsf=(string)($_GET['workspace']??'');if($wsf!==''&&!ctype_digit($wsf))fail('Invalid workspace. Use the numeric workspace ID.',422);
+    foreach(query("SELECT r.id,r.data,r.ws,w.name AS ws_name FROM records r LEFT JOIN workspaces w ON w.id=r.ws WHERE r.kind='maintenance'".($wsf!==''?' AND r.ws=?':''),$wsf!==''?[(int)$wsf]:[])->fetchAll() as $r){
         $d=json_decode($r['data'],true)?:[];if(($d['public']??'1')!=='1')continue;
-        $i=maintenanceItem((int)$r['id'],$d,$now);$st=strtotime($i['start_utc']);$en=strtotime($i['end_utc']);
+        $i=maintenanceItem((int)$r['id'],$d,$now)+['workspace'=>['id'=>(int)$r['ws'],'name'=>(string)($r['ws_name']??'')]];$st=strtotime($i['start_utc']);$en=strtotime($i['end_utc']);
         $ok=match($scope){
             'current'=>in_array($i['status'],['active','upcoming'],true)&&$st<=$now+$days*86400,
             'active'=>$i['status']==='active',
@@ -36,5 +37,5 @@ try {
     $active=array_values(array_filter($items,fn($i)=>$i['status']==='active'));
     $next=null;foreach($items as $i)if($i['status']==='upcoming'){$next=$i;break;}
     if($method==='HEAD')exit;
-    response(['api'=>'ciegolinkinfrahub-maintenance','api_version'=>1,'generated_at'=>maintenanceTime($now),'timezone'=>maintenanceZone()->getName(),'scope'=>$scope,'maintenance_active'=>(bool)$active,'active'=>$active,'next'=>$next,'count'=>count($items),'items'=>$items]);
+    response(['api'=>'ciegolinkinfrahub-maintenance','api_version'=>1,'workspace'=>$wsf!==''?(int)$wsf:null,'generated_at'=>maintenanceTime($now),'timezone'=>maintenanceZone()->getName(),'scope'=>$scope,'maintenance_active'=>(bool)$active,'active'=>$active,'next'=>$next,'count'=>count($items),'items'=>$items]);
 }catch(Throwable $e){error_log('CiegoLink Infra maintenance API: '.$e->getMessage());fail('Server error.',500);}

@@ -242,18 +242,20 @@ Parameters (all optional):
 | `scope` | `current` (in progress + planned), `active`, `upcoming`, `completed`, `all` | `current` |
 | `days` | planned entries up to N days ahead (1-365) | `90` |
 | `past` | completed entries of the last N days for `completed`/`all` (1-365) | `30` |
+| `workspace` | only entries of this workspace (numeric ID, shown under ⚙ Manage workspaces) | all workspaces |
 
 Response:
 
 ```json
 {
   "api": "ciegolinkinfrahub-maintenance", "api_version": 1,
-  "generated_at": "2026-10-24T15:20:00+02:00", "timezone": "Europe/Zurich", "scope": "current",
+  "generated_at": "2026-10-24T15:20:00+02:00", "timezone": "Europe/Zurich", "scope": "current", "workspace": null,
   "maintenance_active": true,
   "active": [ { "id": 12, "title": "Playout server update", "status": "active",
     "start": "2026-10-24T15:00:00+02:00", "end": "2026-10-24T16:30:00+02:00",
     "start_utc": "2026-10-24T13:00:00Z", "end_utc": "2026-10-24T14:30:00Z",
-    "duration_minutes": 90, "devices": [ { "id": 7, "name": "Playout 1", "type": "Playout server" } ], "services": ["Playout", "SRT gateway"], "message": "Short interruptions possible." } ],
+    "duration_minutes": 90, "devices": [ { "id": 7, "name": "Playout 1", "type": "Playout server" } ], "services": ["Playout", "SRT gateway"], "message": "Short interruptions possible.",
+    "workspace": { "id": 1, "name": "Main workspace" } } ],
   "next": "next planned entry (same fields) or null",
   "count": 2,
   "items": "all matching entries, sorted by start"

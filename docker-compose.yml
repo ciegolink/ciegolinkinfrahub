@@ -5,7 +5,7 @@ name: ciegolinkinfrahub
 services:
   hub:
     build: .
-    image: ciegolink/ciegolinkinfrahub:1.0.0
+    image: ciegolink/ciegolinkinfrahub:1.0.1
     restart: unless-stopped
     environment:
       TZ: ${TZ:-Europe/Zurich}
@@ -32,7 +32,7 @@ services:
     build:
       context: .
       dockerfile: docker/gateway.Dockerfile
-    image: ciegolink/ciegolinkinfrahub-ssh-gateway:1.0.0
+    image: ciegolink/ciegolinkinfrahub-ssh-gateway:1.0.1
     restart: unless-stopped
     environment:
       GATEWAY_SECRET: ${GATEWAY_SECRET:?Set GATEWAY_SECRET in .env}
