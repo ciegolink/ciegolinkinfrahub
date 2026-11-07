@@ -227,6 +227,15 @@ class SecurityChecks(unittest.TestCase):
         st=self.admin.call('state')[1]['user'];self.assertEqual((st['name'],st['role']),('Chef','admin'))
         self.assertEqual(self.admin.call('user_update',{'id':u['id'],'display_name':'x\u0001','role':'editor','active':True})[0],422)
         self.assertEqual(self.editor.call('user_update',{'id':u['id'],'display_name':'Hack'})[0],403)
+    def test_05h_generated_password_and_totp_name(self):
+        st,out=self.admin.call('user_create',{'username':'auto-pw','role':'user'});self.assertEqual(st,200,out)
+        import re
+        self.assertRegex(out['password'],r'^[A-HJ-NP-Za-km-np-z2-9]{5}(-[A-HJ-NP-Za-km-np-z2-9]{5}){3}$')
+        a=API(self.base);self.assertEqual(a.login('auto-pw',out['password'],'')[0],200)
+        self.assertEqual(a.call('password',{'old':out['password'],'password':'Auto-pw-own-password-1!'})[0],200)
+        uri=a.call('totp_begin',{})[1]['uri']
+        self.assertTrue(uri.startswith('otpauth://totp/CiegoLink%20InfraHub%3Aauto-pw?'),uri);self.assertIn('&issuer=CiegoLink%20InfraHub&',uri)
+        st,out=self.admin.call('user_create',{'username':'own-pw','role':'user','password':'Test-only-password-123!'});self.assertEqual(st,200);self.assertNotIn('password',out)
     def test_05g_user_delete(self):
         pw='Test-only-password-123!'
         self.assertEqual(self.admin.call('user_create',{'username':'to-delete','password':pw,'role':'user','workspaces':{'1':'admin'}})[0],200)

@@ -12,6 +12,10 @@ function b32(string $data):string {$alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 function unb32(string $s):string {$bits='';foreach(str_split($s) as $c){$n=strpos('ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',$c);if($n===false)throw new RuntimeException('TOTP secret');$bits.=str_pad(decbin($n),5,'0',STR_PAD_LEFT);}$out='';foreach(str_split($bits,8) as $b)if(strlen($b)===8)$out.=chr(bindec($b));return $out;}
 function otp(string $secret,int $step):string {$h=hash_hmac('sha1',pack('N2',0,$step),unb32($secret),true);$o=ord($h[19])&15;$n=unpack('N',substr($h,$o,4))[1]&0x7fffffff;return str_pad((string)($n%1000000),6,'0',STR_PAD_LEFT);}
 function verifyOtp(string $secret,string $code,int $last=-1):int {if(!preg_match('/^\d{6}$/D',$code))return -1;$now=(int)floor(time()/30);foreach([$now-1,$now,$now+1] as $step)if($step>$last&&hash_equals(otp($secret,$step),$code))return $step;return -1;}
+// name of the entry in authenticator apps: "CiegoLink InfraHub: <username>"
+const TOTP_ISSUER='CiegoLink InfraHub';
+// temporary password for new users: 20 random characters without look-alikes (0/O, 1/l/I), in groups of five
+function tempPassword():string {$a='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';$s='';for($i=0;$i<20;$i++)$s.=$a[random_int(0,strlen($a)-1)];return implode('-',str_split($s,5));}
 function passwordCheck(string $p):void {if(strlen($p)<14||strlen($p)>72)fail('Password must be 14 to 72 bytes long.',422);}
 function fail(string $m,int $status=400):never {http_response_code($status);echo json_encode(['error'=>$m],JSON_UNESCAPED_UNICODE);exit;}
 function response(array $v):never {echo json_encode($v,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);exit;}

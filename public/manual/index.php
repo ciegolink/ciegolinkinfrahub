@@ -39,7 +39,7 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 <ol>
 <li><b>First sign-in:</b> enter username and temporary password, leave the 2FA field empty.</li>
 <li><b>Set your own password:</b> at least 14 characters. Other sessions of your account end.</li>
-<li><b>Set up two-factor authentication:</b> scan the shown QR code with an authenticator app (e.g. Google Authenticator, Microsoft Authenticator, 1Password, Bitwarden), or add the setup key below it manually as TOTP with 6 digits and 30 seconds, then confirm with the current code.</li>
+<li><b>Set up two-factor authentication:</b> scan the shown QR code with an authenticator app (e.g. Google Authenticator, Microsoft Authenticator, 1Password, Bitwarden), or add the setup key below it manually as TOTP with 6 digits and 30 seconds. The entry appears as <b>CiegoLink InfraHub: your username</b>; then confirm with the current code.</li>
 <li><b>Later sign-ins:</b> username, password and the current 6-digit code from the app.</li>
 </ol>
 <?=fig('login','Sign-in with username, password and 2FA code')?>
@@ -216,7 +216,7 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 <?=fig('account-users','User management')?>
 <h3>User management (administrators)</h3>
 <ul>
-<li><b>＋ Add user:</b> name, username, role, workspace access and a temporary password. The new user sets their own password and 2FA on first sign-in.</li>
+<li><b>＋ Add user:</b> name, username, role and workspace access. A temporary password is created automatically and shown once with copy buttons; give it to the user over a secure channel. The new user sets their own password and 2FA on first sign-in.</li>
 <li><b>Manage:</b> change name, role or status (active / disabled). Saving ends the user's current sessions.</li>
 <li><b>Remove a user:</b> <b>Manage</b> → status <b>Disabled</b> → Save ends all sessions at once and keeps the account for later. To delete it permanently, open <b>Manage</b> again on the disabled user → <b>Delete user</b>, confirm with the username and your password. The audit log keeps the name. Your own account cannot be deleted.</li>
 <li>Lost 2FA device: the server administrator resets password and 2FA on the command line (see <a href="#faq">Troubleshooting</a>).</li>
