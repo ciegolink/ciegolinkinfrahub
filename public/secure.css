@@ -231,3 +231,26 @@ a.iconbtn{border:1px solid var(--line);border-radius:7px;color:#a8aba5;backgroun
 #fields .wsaccess select,#fields select[data-member]{width:auto;min-width:230px}
 /* 2FA setup QR code */
 .qrbox{width:232px;max-width:100%;padding:10px;background:#fff;border-radius:12px;margin:6px 0 14px}.qr{display:block;width:100%;height:auto}
+/* Password manager: folder panel + groups */
+.vault{display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px;align-items:start}
+.credtree{position:sticky;top:12px;display:grid;gap:1px;padding:10px 8px;border:1px solid var(--line);border-radius:12px;background:#191b1f;max-height:calc(100dvh - 120px);overflow:auto}
+.treerow{display:flex;align-items:center;gap:2px;min-width:0}.treerow.d1{padding-left:14px}.treerow.d2{padding-left:28px}.treerow.d3{padding-left:42px}.treerow.d4{padding-left:56px}
+.treechev{flex:none;width:22px;height:30px;padding:0;border:0;background:none;display:grid;place-items:center;color:var(--muted)}
+.treenode{flex:1;min-width:0;display:flex;align-items:center;gap:8px;border:0;padding:7px 8px;border-radius:7px;text-align:left;font-size:13.5px;color:#d6d9d1;background:none}
+.treenode:hover{background:#eaeae20d}.treenode.active{background:#19858026;color:var(--sand);font-weight:700}
+.treenode .tname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.treenode .tabcount{margin-left:0}
+.treesep{height:1px;background:var(--line);margin:6px 4px}
+svg.fico{width:16px;height:16px;flex:none}svg.fico.f{fill:#d8b45a}svg.fico.o{fill:none;stroke:var(--muted);stroke-width:1.8}svg.fico.a{fill:none;stroke:#9bc4ba;stroke-width:2}
+svg.chev{width:12px;height:12px;flex:none;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.treechev.open svg.chev,.groupbtn.open svg.chev{transform:rotate(90deg)}
+@media(prefers-reduced-motion:reduce){svg.chev{transition:none}}
+.credlist{display:grid;gap:12px;min-width:0}
+.credhead{font-size:13px;color:var(--muted)}.credhead b,.crumbpath{color:var(--sand);font-weight:700}.fpath{color:var(--muted);font-weight:600}
+.credgroup{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.credghead{display:flex;align-items:center;gap:10px;padding:3px 14px 3px 4px;background:#24262a}
+.groupbtn{flex:1;min-width:0;display:flex;align-items:center;gap:9px;border:0;background:none;padding:7px 8px;font-weight:700;font-size:13.5px;text-align:left;color:var(--muted)}
+.groupbtn .gname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--sand)}
+.credgroup .tablewrap{border:0;border-radius:0;margin:0;max-height:none}
+.credtable{width:100%;table-layout:fixed}.credtable td:nth-child(1){width:28%}.credtable td:nth-child(2){width:26%}.credtable td:nth-child(4){width:150px}
+.credtable td{overflow-wrap:anywhere}
+@media(max-width:900px){.vault{grid-template-columns:1fr}.credtree{position:static;max-height:260px}.credtable{table-layout:auto}}

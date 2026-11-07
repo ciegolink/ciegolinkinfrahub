@@ -13,6 +13,7 @@ Update: see `UPDATE.md` (`docker compose up -d --build`). No manual steps unless
 - **Delete users** (system administrators): only disabled users, confirmed with the username and the own password; workspace access and saved sign-ins are removed, the audit log keeps the name.
 - **Temporary password is created automatically** for new users (20 characters without look-alikes, shown once with copy buttons).
 - Authenticator apps show new entries as **CiegoLink InfraHub: username** (before: CiegoLink). Existing entries keep working unchanged.
+- **Password manager folders**: folder panel on the left instead of tabs, subfolders with “/” (e.g. `Customer/Server`), entries grouped by folder with collapsible headings, Rename directly at each folder (moves subfolders too). The ▸ marker is replaced by a folder icon.
 - Maintenance API: optional parameter `workspace=<ID>`; every item contains `workspace` (id, name).
 - Export format version 2: `workspace` name and `maps` (with box positions) instead of `map_position` per device/element. Exports of 1.0.0 can still be imported; their positions become the map "Main map".
 - `update.sh`: update with backup (database, key, software, old files), `git pull` or `--source <zip>`, build, health and version check and automatic rollback; `--rollback` by hand; `--install-timer` for automatic updates of new versions (systemd).

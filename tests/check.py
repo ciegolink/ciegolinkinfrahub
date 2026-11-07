@@ -551,6 +551,15 @@ class SecurityChecks(unittest.TestCase):
         st,out=self.editor.call('folder_rename',{'from':'Kunden Star TV','to':'Star TV'});self.assertEqual((st,out['changed']),(200,2))
         self.assertEqual({r['data']['folder'] for r in self.records() if r['kind']=='credentials' and r['data']['name'].startswith('Folder A')},{'Star TV'})
         self.assertIn('Star TV',[c.get('folder') for c in self.admin.call('export',{})[1]['credentials']])
+        # subfolders: "/" separates, spaces around it are removed, renaming a folder moves its subfolders
+        self.assertEqual(self.save('credentials',{'name':'Sub B1','folder':' Kunde B /  Server ','username':'s','password':'x'})[0],200)
+        self.assertEqual(self.save('credentials',{'name':'Sub B2','folder':'Kunde B','username':'t','password':'x'})[0],200)
+        self.assertEqual(self.save('credentials',{'name':'Sub B3','folder':'Kunde Bx','username':'u','password':'x'})[0],200)
+        f=lambda:{r['data']['name']:r['data']['folder'] for r in self.records() if r['kind']=='credentials' and r['data']['name'].startswith('Sub B')}
+        self.assertEqual(f()['Sub B1'],'Kunde B/Server')
+        st,out=self.editor.call('folder_rename',{'from':'Kunde B','to':'Kunden / B'});self.assertEqual((st,out['changed']),(200,2))
+        self.assertEqual(f(),{'Sub B1':'Kunden/B/Server','Sub B2':'Kunden/B','Sub B3':'Kunde Bx'})
+        st,out=self.editor.call('folder_rename',{'from':'Kunden','to':''});self.assertEqual(f()['Sub B1'],'B/Server')
     def test_23_maintenance_api(self):
         import datetime as dt
         now=dt.datetime.now(dt.timezone.utc).replace(microsecond=0)

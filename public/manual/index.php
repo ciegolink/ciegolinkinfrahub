@@ -150,10 +150,10 @@ function fig(string $img,string $caption):string{return '<figure><a href="img/'.
 <li>Leave the password field empty when editing to keep the existing password.</li>
 <li><b>Files:</b> attach configuration files, SSH keys or encrypted connection files (up to 5 MiB per file, 50 MiB per entry). Files are stored encrypted and are only downloaded, never opened by the hub.</li>
 <li>Every reveal, copy and download is written to the audit log.</li>
-<li><b>Folders:</b> type a folder name in the field <b>Folder</b> (or pick an existing one). Folders appear as tabs above the list; <b>Rename folder</b> moves all entries at once. Use an existing name to merge two folders, an empty name to remove the folder.</li>
+<li><b>Folders:</b> type a folder name in the field <b>Folder</b> (or pick an existing one); a “/” makes a subfolder, e.g. <code>Customer Ltd./Server</code>. The folders are listed on the left with the number of entries: <b>All</b>, every folder and subfolder, <b>No folder</b>. In the list the entries are grouped by folder; click a folder heading to collapse or expand it (remembered in your browser). <b>Rename</b> at a folder heading moves all its entries and subfolders at once; use an existing name to merge two folders, an empty name to remove the folder.</li>
 </ul>
 <?=fig('credential-files','Encrypted files of a credential')?>
-<p class="note">All signed-in users can read all entries of the vault. Do not store anything there that some team members must not see.</p>
+<p class="note">Everyone with access to the workspace can read all entries of its vault. Do not store anything there that some members must not see; use a separate workspace instead.</p>
 </section>
 
 <section id="docs"><h2>Documentation</h2>
